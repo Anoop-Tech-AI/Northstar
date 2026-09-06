@@ -101,8 +101,8 @@ No package installation or compilation steps are required.
 ### Option 1: Python 3 Built-in Server (Recommended)
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/northstar-weather.git
-cd northstar-weather
+git clone https://github.com/Anoop-Tech-AI/Northstar.git
+cd Northstar
 
 # Start local server on port 8000
 python -m http.server 8000
