@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2730">
+  <title>Northstar Weather</title>
+  <meta name="description" content="Northstar Weather — Read the sky before you go. A lightweight weather intelligence dashboard designed to help users understand current conditions, forecasts, air quality, and atmospheric patterns.">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="shortcut icon" href="assets/favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  
+  <meta property="og:title" content="Northstar Weather">
+  <meta property="og:description" content="Read the sky before you go.">
+  <meta property="og:image" content="assets/northstar-icon.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Northstar Weather">
+  <meta name="twitter:description" content="Read the sky before you go.">
+  <meta name="twitter:image" content="assets/northstar-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Northstar Weather home">
+        <img src="assets/northstar-icon.png" alt="Northstar Weather" class="brand-logo" width="34" height="34">
+        <span>northstar<span class="brand-dot">.</span></span>
+      </a>
+      <div class="topbar-actions">
+        <div class="topbar-meta">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span>Live atmospheric feed</span>
+          <span class="topbar-divider" aria-hidden="true"></span>
+          <span id="updatedAt">Updated just now</span>
+        </div>
+        <div class="theme-switcher" id="themeSwitcher" role="radiogroup" aria-label="Appearance theme">
+          <button type="button" class="theme-btn" data-theme-val="light" role="radio" aria-checked="false" title="Light theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="theme-icon" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <line x1="12" y1="2" x2="12" y2="4"></line>
+              <line x1="12" y1="20" x2="12" y2="22"></line>
+              <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>
+              <line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+              <line x1="2" y1="12" x2="4" y2="12"></line>
+              <line x1="20" y1="12" x2="22" y2="12"></line>
+              <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>
+              <line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>
+            </svg>
+            <span>Light</span>
+          </button>
+          <button type="button" class="theme-btn" data-theme-val="dark" role="radio" aria-checked="false" title="Dark theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="theme-icon" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <span>Dark</span>
+          </button>
+          <button type="button" class="theme-btn is-active" data-theme-val="system" role="radio" aria-checked="true" title="Follow system theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="theme-icon" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>Auto</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    
+    <section class="weather-alerts-container" id="weatherAlertsContainer" aria-label="Weather Advisories" hidden></section>
+
+    <main>
+      
+      <section class="hero-grid" aria-labelledby="heroHeading">
+        <div class="hero-copy">
+          <p class="eyebrow">Atmospheric observations</p>
+          <h1 id="heroHeading">Read the sky<br><em>before you go.</em></h1>
+          <p class="hero-description">A clear, considered look at the weather where you are now and where you're headed next.</p>
+          
+          
+          <div class="search-container">
+            <form class="search-form" id="searchForm" role="search">
+              <div class="search-input-wrapper">
+                <label class="search-box" for="cityInput">
+                  <span class="search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </span>
+                  <input id="cityInput" type="search" placeholder="Search a city or region..." value="London" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false">
+                  <button type="submit" aria-label="Search city" title="Search city">
+                    <span aria-hidden="true">&#8599;</span>
+                  </button>
+                </label>
+                <div class="search-suggestions" id="searchSuggestions" role="listbox" hidden></div>
+              </div>
+              <button class="location-button" id="locationButton" type="button" title="Detect my current location">
+                <span class="location-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                  </svg>
+                </span>
+                <span>Use my location</span>
+              </button>
+            </form>
+            <p class="form-status" id="formStatus" role="status" aria-live="polite">Search a city or pick from recent places.</p>
+          </div>
+
+          
+          <div class="recent-searches-bar" id="recentSearchesContainer" aria-label="Recent searches" hidden>
+            <span class="recent-label">Recent:</span>
+            <div class="recent-pills" id="recentPills"></div>
+            <button type="button" class="recent-clear-btn" id="clearRecentBtn" title="Clear search history">Clear</button>
+          </div>
+
+          
+          <div class="quick-controls" aria-label="Weather controls">
+            <div class="unit-toggle" role="group" aria-label="Temperature unit">
+              <button class="unit-option is-active" type="button" data-unit="celsius" aria-pressed="true">°C</button>
+              <button class="unit-option" type="button" data-unit="fahrenheit" aria-pressed="false">°F</button>
+            </div>
+            <div class="unit-toggle wind-toggle" role="group" aria-label="Wind speed unit">
+              <button class="unit-option is-active" type="button" data-wind-unit="kmh" aria-pressed="true">km/h</button>
+              <button class="unit-option" type="button" data-wind-unit="mph" aria-pressed="false">mph</button>
+            </div>
+            <div class="unit-toggle theme-toggle" role="group" aria-label="Theme mode">
+              <button class="unit-option" type="button" data-theme-val="light" aria-pressed="false" title="Light theme">Light</button>
+              <button class="unit-option" type="button" data-theme-val="dark" aria-pressed="false" title="Dark theme">Dark</button>
+              <button class="unit-option is-active" type="button" data-theme-val="system" aria-pressed="true" title="System theme">Auto</button>
+            </div>
+            <button class="refresh-button" id="refreshButton" type="button" title="Refresh weather observations">
+              <span class="refresh-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+              </span>
+              <span>Refresh</span>
+            </button>
+            <button class="share-button" id="shareButton" type="button" title="Share weather report">
+              <span class="share-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+              </span>
+              <span>Share</span>
+            </button>
+          </div>
+          <div class="share-feedback" id="shareFeedback" role="status" aria-live="polite" hidden></div>
+        </div>
+
+        
+        <div class="sky-card" id="skyCard" data-weather="clear" data-is-day="true">
+          <div class="sky-glow" aria-hidden="true"></div>
+          <div class="weather-particles" aria-hidden="true"></div>
+          <div class="sky-card-top">
+            <span class="pill"><span class="pulse" aria-hidden="true"></span> Current view</span>
+            <span class="coordinates" id="coordinates">51.51 N / 0.13 W</span>
+          </div>
+          <div class="weather-orb" aria-hidden="true">
+            <div class="sun-core"></div>
+            <div class="sun-ring ring-one"></div>
+            <div class="sun-ring ring-two"></div>
+            <div class="cloud cloud-back"></div>
+            <div class="cloud cloud-front"></div>
+          </div>
+          <div class="current-location">
+            <p class="location-label">Right now in</p>
+            <div class="location-header-row">
+              <h2 id="locationName">London</h2>
+              <button type="button" class="fav-star-btn" id="favButton" title="Save location to favorites" aria-label="Toggle favorite location">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </button>
+            </div>
+            <p class="location-region" id="locationRegion">United Kingdom</p>
+            <p class="location-local-time" id="localTimeDisplay">Local time: 12:00 PM · UTC</p>
+            <p class="weather-summary" id="weatherSummary">Clear sky</p>
+          </div>
+          <div class="temperature-row" aria-label="Current temperature">
+            <span class="temperature" id="temperature">18</span><span class="degree" aria-hidden="true">°</span><span class="unit" id="temperatureUnit">C</span>
+          </div>
+          <div class="sky-footer">
+            <span id="feelsLike">Feels like 18°</span>
+            <span class="footer-separator" aria-hidden="true"></span>
+            <span id="daylight">Daylight 12h 04m</span>
+          </div>
+        </div>
+      </section>
+
+      
+      <section class="favorites-section" id="favoritesSection" aria-labelledby="favHeading" hidden>
+        <div class="favorites-header">
+          <div>
+            <p class="eyebrow">Saved locations</p>
+            <h2 id="favHeading">Favorites</h2>
+          </div>
+          <span class="favorites-count" id="favoritesCount">0 locations</span>
+        </div>
+        <div class="favorites-grid" id="favoritesGrid" role="list"></div>
+      </section>
+
+      
+      <section class="details-section" aria-labelledby="detailsHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">The useful details</p>
+            <h2 id="detailsHeading">Conditions at a glance</h2>
+          </div>
+          <div class="date-stamp" id="dateStamp">MON / 09 SEP 2024</div>
+        </div>
+        <div class="metrics-grid">
+          
+          <article class="metric-card metric-wind">
+            <div class="metric-top">
+              <span>Wind</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="windSpeed">11</strong><span id="windSpeedUnit">km/h</span></div>
+            <div class="metric-note">
+              <span class="wind-arrow-wrap">
+                <span class="wind-arrow" id="windArrow" aria-hidden="true">&#8599;</span>
+                <span id="windDirection">Westerly breeze</span>
+              </span>
+            </div>
+          </article>
+
+          
+          <article class="metric-card metric-humidity">
+            <div class="metric-top">
+              <span>Humidity</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="humidity">68</strong><span>%</span></div>
+            <div class="metric-bar" aria-hidden="true"><span id="humidityBar" style="width: 68%;"></span></div>
+            <div class="metric-note" id="humidityNote">Comfortable air</div>
+          </article>
+
+          
+          <article class="metric-card metric-high">
+            <div class="metric-top">
+              <span>Today's range</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="2" x2="12" y2="22"></line>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <polyline points="16 18 12 22 8 18"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="highTemp">21</strong><span id="highTempUnit">° high</span></div>
+            <div class="range-track" aria-hidden="true"><span id="rangeTrack" style="width: 58%;"></span></div>
+            <div class="metric-note"><span id="lowTemp">Low 13°</span><span id="rangeNote">Mild afternoon</span></div>
+          </article>
+
+          
+          <article class="metric-card metric-visibility">
+            <div class="metric-top">
+              <span>Visibility</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="visibility">24</strong><span id="visibilityUnit">km</span></div>
+            <div class="metric-note">
+              <span class="visibility-status">Excellent</span>
+              <span class="visibility-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="is-dim"></i></span>
+            </div>
+          </article>
+
+          
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Pressure</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <polyline points="12 7 12 12 15 15"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="pressure">1018</strong><span>hPa</span></div>
+            <div class="metric-note" id="pressureNote">Sea-level pressure</div>
+          </article>
+
+          
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Dew point</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="dewPoint">11</strong><span id="dewPointUnit">°C</span></div>
+            <div class="metric-note" id="dewPointNote">Comfortable air</div>
+          </article>
+
+          
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>Cloud cover</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="cloudCover">35</strong><span>%</span></div>
+            <div class="metric-bar" aria-hidden="true"><span id="cloudCoverBar" style="width: 35%;"></span></div>
+            <div class="metric-note" id="cloudCoverNote">Partly clear sky</div>
+          </article>
+
+          
+          <article class="metric-card">
+            <div class="metric-top">
+              <span>UV index</span>
+              <span class="metric-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              </span>
+            </div>
+            <div class="metric-value"><strong id="uvIndex">3.2</strong><span>today max <b id="uvMax">4.5</b></span></div>
+            <div class="uv-scale" aria-hidden="true"><span id="uvScaleFill" style="left: 30%;"></span></div>
+            <div class="metric-note" id="uvNote">Moderate UV risk</div>
+          </article>
+        </div>
+      </section>
+
+      
+      <section class="forecast-section" aria-labelledby="hourlyHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Next 24 hours</p>
+            <h2 id="hourlyHeading">Hourly forecast</h2>
+          </div>
+          <div class="hourly-header-controls">
+            <p class="section-note" id="hourlyNote">24 hours &middot; scroll for more</p>
+            <div class="hourly-nav-buttons" aria-label="Hourly navigation">
+              <button type="button" class="hourly-nav-btn" id="hourlyPrevBtn" aria-label="Previous hours" title="Previous hours">&larr;</button>
+              <button type="button" class="hourly-nav-btn" id="hourlyNextBtn" aria-label="Next hours" title="Next hours">&rarr;</button>
+            </div>
+          </div>
+        </div>
+        <div class="hourly-list" id="hourlyList" aria-live="polite" tabindex="0"></div>
+      </section>
+
+      
+      <section class="analysis-grid" aria-labelledby="analysisHeading">
+        
+        <article class="analysis-panel temperature-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow" id="analysisHeading">The shape of the day</p>
+              <h2>Temperature &amp; feels like</h2>
+            </div>
+            <div class="chart-legend" aria-label="Chart legend">
+              <span class="legend-item actual-temp"><i></i> temperature</span>
+              <span class="legend-item feels-temp"><i></i> feels like</span>
+            </div>
+          </div>
+          <div class="temperature-chart-container">
+            <div class="temperature-chart" id="temperatureChart" role="img" aria-label="Hourly temperature and apparent temperature trendline"></div>
+            <div class="chart-tooltip" id="chartTooltip" hidden></div>
+          </div>
+        </article>
+
+        
+        <div class="intelligence-column">
+          
+          <article class="analysis-panel intelligence-panel" aria-labelledby="intelligenceTitle">
+            <div>
+              <p class="eyebrow">Atmospheric Briefing</p>
+              <h2 id="intelligenceTitle">Reading the atmosphere</h2>
+              <p id="intelligenceText">Atmospheric analysis will appear once weather data is loaded.</p>
+            </div>
+            <div class="insight-tags" id="insightTags" aria-label="Key atmospheric highlights"></div>
+          </article>
+
+          
+          <article class="best-time-panel" id="bestTimeSection" aria-labelledby="bestTimeHeading">
+            <div class="best-time-header">
+              <span class="eyebrow">Atmospheric Windows</span>
+              <h3 id="bestTimeHeading">Best time today</h3>
+            </div>
+            <div class="best-time-grid" id="bestTimeGrid"></div>
+          </article>
+        </div>
+      </section>
+
+      
+      <section class="precipitation-section" aria-labelledby="precipHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Hydrological outlook</p>
+            <h2 id="precipHeading">Precipitation &amp; rain chance</h2>
+          </div>
+          <div class="rain-callout" id="rainCallout">Mostly dry today</div>
+        </div>
+        <div class="precipitation-body">
+          <div class="precip-stat">
+            <strong id="precipProbability">10</strong>
+            <span>% chance of rain today</span>
+          </div>
+          <div class="precip-stat">
+            <strong id="precipAmount">0.0</strong>
+            <span id="precipUnit">mm expected volume</span>
+          </div>
+          <div class="precip-bars" id="precipBars" role="img" aria-label="Hourly rain probability breakdown"></div>
+        </div>
+      </section>
+
+      
+      <section class="sun-moon-section" aria-labelledby="sunMoonHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Celestial cycles</p>
+            <h2 id="sunMoonHeading">Sun &amp; moon</h2>
+          </div>
+          <div class="daylight-status" id="daylightStatus">Daylight now</div>
+        </div>
+        <div class="sun-moon-grid">
+          
+          <article class="cycle-card sun-card">
+            <div class="cycle-header">
+              <span class="cycle-title">Solar cycle</span>
+              <span class="cycle-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              </span>
+            </div>
+            <div class="solar-arc-container" id="solarArcContainer" aria-hidden="true"></div>
+            <div class="cycle-stats">
+              <div><span>Sunrise</span><strong id="sunrise">06:24 AM</strong></div>
+              <div><span>Sunset</span><strong id="sunset">07:38 PM</strong></div>
+              <div><span>Total daylight</span><strong id="daylightDuration">13h 14m</strong></div>
+            </div>
+          </article>
+
+          
+          <article class="cycle-card moon-card">
+            <div class="cycle-header">
+              <span class="cycle-title">Lunar cycle</span>
+              <span class="cycle-icon" id="moonSymbol" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              </span>
+            </div>
+            <div class="solar-arc-container" id="lunarGraphicContainer" aria-hidden="true"></div>
+            <div class="cycle-stats">
+              <div><span>Phase</span><strong id="moonPhase">Waxing Crescent</strong></div>
+              <div><span>Illumination</span><strong id="moonIllumination">24%</strong></div>
+              <div><span>Next phase</span><strong id="nextMoonPhase">First Quarter</strong></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      
+      <section class="air-quality-section" aria-labelledby="aqHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Atmospheric purity</p>
+            <h2 id="aqHeading">Air quality &amp; pollutants</h2>
+          </div>
+          <div class="aq-badge" id="aqCategory">Good</div>
+        </div>
+        <div class="air-quality-grid" id="airQualityGrid">
+          <div class="air-quality-empty" id="airQualityEmpty">Loading air quality data...</div>
+        </div>
+      </section>
+
+      
+      <section class="map-section" id="mapSection" aria-labelledby="mapHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Geographic view</p>
+            <h2 id="mapHeading">Atmospheric coordinates &amp; map</h2>
+          </div>
+          <p class="section-note" id="mapHint">Click any point on the map to inspect weather at those coordinates</p>
+        </div>
+        <div class="map-wrapper">
+          <div id="weatherMap" class="weather-map-container" role="region" aria-label="Interactive weather map"></div>
+          <div class="map-legend">
+            <span class="map-legend-item"><i class="map-pin-indicator"></i> Active Location</span>
+            <span class="map-legend-coord" id="mapCoordDisplay">51.51° N, 0.13° W</span>
+          </div>
+        </div>
+      </section>
+
+      
+      <section class="compare-section" id="compareSection" aria-labelledby="compareHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Comparative meteorology</p>
+            <h2 id="compareHeading">Compare locations</h2>
+          </div>
+          <p class="section-note">Side-by-side comparison across key atmospheric metrics</p>
+        </div>
+
+        <div class="compare-inputs-grid">
+          
+          <div class="compare-slot-card is-active-slot">
+            <span class="slot-badge">Primary</span>
+            <strong class="slot-title" id="compareSlot1Name">London</strong>
+            <span class="slot-sub" id="compareSlot1Region">United Kingdom</span>
+          </div>
+
+          
+          <div class="compare-slot-card" id="compareSlot2Card">
+            <div class="slot-header">
+              <span class="slot-badge">Comparison 1</span>
+              <button type="button" class="slot-clear-btn" id="compareSlot2Clear" title="Clear location" hidden>&times;</button>
+            </div>
+            <div class="slot-search-wrap" id="compareSlot2SearchWrap">
+              <input type="text" id="compareSlot2Input" placeholder="Add city to compare..." autocomplete="off">
+              <div class="slot-suggestions" id="compareSlot2Suggestions" hidden></div>
+            </div>
+            <div class="slot-selected-info" id="compareSlot2Info" hidden>
+              <strong class="slot-title" id="compareSlot2Name">--</strong>
+              <span class="slot-sub" id="compareSlot2Region">--</span>
+            </div>
+          </div>
+
+          
+          <div class="compare-slot-card" id="compareSlot3Card">
+            <div class="slot-header">
+              <span class="slot-badge">Comparison 2</span>
+              <button type="button" class="slot-clear-btn" id="compareSlot3Clear" title="Clear location" hidden>&times;</button>
+            </div>
+            <div class="slot-search-wrap" id="compareSlot3SearchWrap">
+              <input type="text" id="compareSlot3Input" placeholder="Add another city..." autocomplete="off">
+              <div class="slot-suggestions" id="compareSlot3Suggestions" hidden></div>
+            </div>
+            <div class="slot-selected-info" id="compareSlot3Info" hidden>
+              <strong class="slot-title" id="compareSlot3Name">--</strong>
+              <span class="slot-sub" id="compareSlot3Region">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-table-container" id="compareTableContainer">
+          <div class="compare-empty-prompt" id="compareEmptyPrompt">
+            <span>Select one or two additional cities above to begin side-by-side atmospheric comparison.</span>
+          </div>
+          <table class="compare-table" id="compareTable" hidden>
+            <thead>
+              <tr>
+                <th scope="col">Atmospheric Metric</th>
+                <th scope="col" id="thCity1">London</th>
+                <th scope="col" id="thCity2">City 2</th>
+                <th scope="col" id="thCity3">City 3</th>
+              </tr>
+            </thead>
+            <tbody id="compareTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      
+      <section class="outlook-section" aria-labelledby="outlookHeading">
+        <div class="outlook-title">
+          <p class="eyebrow">The next 7 days</p>
+          <h2 id="outlookHeading">Weekly outlook</h2>
+          <p class="section-subtitle">A scan of upcoming conditions, diurnal temperatures, and precipitation probabilities.</p>
+        </div>
+        <div class="forecast-list" id="forecastList" role="list"></div>
+      </section>
+    </main>
+
+    
+    <footer>
+      <div class="footer-copy">
+        <span>&copy; Northstar Weather &middot; Read the sky before you go.</span>
+      </div>
+      <div class="footer-attributions">
+        <span>Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></span>
+        <span>Map tiles &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</span>
+        <span>Mapping by <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet</a></span>
+        <span>Location by <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener noreferrer">BigDataCloud</a></span>
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

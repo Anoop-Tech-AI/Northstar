@@ -1,0 +1,22 @@
+{
+  "name": "Northstar Weather",
+  "short_name": "Northstar",
+  "description": "Read the sky before you go.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ed",
+  "theme_color": "#0f2730",
+  "icons": [
+    {
+      "src": "assets/northstar-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

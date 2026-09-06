@@ -1,0 +1,22 @@
+{
+  "name": "northstar-weather",
+  "version": "1.0.0",
+  "description": "Northstar Weather — a lightweight weather intelligence dashboard.",
+  "scripts": {
+    "start": "npx -y serve .",
+    "dev": "npx -y serve ."
+  },
+  "keywords": [
+    "weather",
+    "weather-app",
+    "javascript",
+    "open-meteo",
+    "openstreetmap",
+    "leaflet",
+    "frontend",
+    "responsive-design",
+    "weather-dashboard"
+  ],
+  "author": "Northstar Contributors",
+  "license": "MIT"
+}
