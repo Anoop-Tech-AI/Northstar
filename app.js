@@ -35,7 +35,62 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+function showToast(message, type = 'info', duration = 3000) {
+  if (!elements.toastContainer) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast-pill';
+  const icon = type === 'success' ? '✓' : type === 'warning' ? '!' : '✦';
+  toast.innerHTML = '<span class="toast-icon" aria-hidden="true">' + icon + '</span><span>' + escapeHtml(message) + '</span>';
+  elements.toastContainer.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px) scale(0.95)';
+    setTimeout(() => toast.remove(), 250);
+  }, duration);
+}
+
 const elements = {
+  subnavBar: document.querySelector('#subnavBar'),
+  subnavLinks: document.querySelectorAll('.subnav-link'),
+  topbarCmdBtn: document.querySelector('#topbarCmdBtn'),
+  topbarSettingsBtn: document.querySelector('#topbarSettingsBtn'),
+  openCommandPaletteBtn: document.querySelector('#openCommandPaletteBtn'),
+  openSettingsBtn: document.querySelector('#openSettingsBtn'),
+  locationSwitcherChip: document.querySelector('#locationSwitcherChip'),
+  chartPanelHeading: document.querySelector('#chartPanelHeading'),
+  chartMetricPills: document.querySelectorAll('.chart-metric-pill'),
+  legendItem1: document.querySelector('#legendItem1'),
+  legendItem2: document.querySelector('#legendItem2'),
+  selectedHourDetail: document.querySelector('#selectedHourDetail'),
+  timelinePanel: document.querySelector('#timelinePanel'),
+  dailyTimeline: document.querySelector('#dailyTimeline'),
+  riskCenterPanel: document.querySelector('#riskCenterPanel'),
+  riskCenterGrid: document.querySelector('#riskCenterGrid'),
+  commandPaletteBackdrop: document.querySelector('#commandPaletteBackdrop'),
+  commandPaletteDialog: document.querySelector('#commandPaletteDialog'),
+  commandPaletteInput: document.querySelector('#commandPaletteInput'),
+  commandPaletteResults: document.querySelector('#commandPaletteResults'),
+  closeCommandPaletteBtn: document.querySelector('#closeCommandPaletteBtn'),
+  cmdCurrentLocationAction: document.querySelector('#cmdCurrentLocationAction'),
+  cmdFavoritesSection: document.querySelector('#cmdFavoritesSection'),
+  cmdFavoritesList: document.querySelector('#cmdFavoritesList'),
+  cmdRecentsSection: document.querySelector('#cmdRecentsSection'),
+  cmdRecentsList: document.querySelector('#cmdRecentsList'),
+  cmdSearchResultsSection: document.querySelector('#cmdSearchResultsSection'),
+  cmdSearchResultsList: document.querySelector('#cmdSearchResultsList'),
+  settingsBackdrop: document.querySelector('#settingsBackdrop'),
+  settingsDrawer: document.querySelector('#settingsDrawer'),
+  closeSettingsBtn: document.querySelector('#closeSettingsBtn'),
+  saveSettingsBtn: document.querySelector('#saveSettingsBtn'),
+  settingsThemePills: document.querySelectorAll('[data-theme-choice]'),
+  settingsTempPills: document.querySelectorAll('[data-temp-choice]'),
+  settingsWindPills: document.querySelectorAll('[data-wind-choice]'),
+  dashboardSectionCheckboxes: document.querySelectorAll('[data-section-target]'),
+  alertThresholdRain: document.querySelector('#alertThresholdRain'),
+  alertThresholdTemp: document.querySelector('#alertThresholdTemp'),
+  alertThresholdAqi: document.querySelector('#alertThresholdAqi'),
+  settingsFavsList: document.querySelector('#settingsFavsList'),
+  toastContainer: document.querySelector('#toastContainer'),
   
   updatedAt: document.querySelector('#updatedAt'),
   weatherAlertsContainer: document.querySelector('#weatherAlertsContainer'),
@@ -184,6 +239,31 @@ let currentPlace = null;
 let currentData = null;
 let temperatureUnit = storage.get('northstar_preferences', {})?.tempUnit || 'celsius';
 let windUnit = storage.get('northstar_preferences', {})?.windUnit || 'kmh';
+let currentChartMetric = 'temperature';
+let selectedHourIndex = null;
+let currentHourlyData = null;
+let currentHourlyStart = 0;
+let commandPaletteItems = [];
+let commandPaletteSelectedIndex = -1;
+let commandSearchTimer = null;
+
+const defaultDashboardSections = {
+  airQualitySection: true,
+  hourlySection: true,
+  outlookSection: true,
+  intelligenceSection: true,
+  precipSection: true,
+  celestialSection: true,
+  mapSection: true,
+  compareSection: true
+};
+
+const defaultAlertRules = {
+  rainThreshold: 60,
+  tempThreshold: 38,
+  aqiThreshold: 100,
+  enabled: true
+};
 
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000; 
 const weatherCache = new Map(); 
@@ -610,6 +690,9 @@ async function getForecast(place, { forceRefresh = false, signal = null } = {}) 
           'showers',
           'wind_speed_10m',
           'wind_direction_10m',
+          'wind_gusts_10m',
+          'relative_humidity_2m',
+          'dew_point_2m',
           'cloud_cover',
           'visibility',
           'uv_index'
@@ -741,19 +824,25 @@ function toggleFavorite() {
   if (!currentPlace) return;
   let favs = getFavorites();
   const idx = favs.findIndex(
-    (f) => Math.abs(f.latitude - currentPlace.latitude) < 0.01 && Math.abs(f.longitude - currentPlace.longitude) < 0.01
+    (f) => Math.abs(f.latitude - currentPlace.latitude) < 0.02 && Math.abs(f.longitude - currentPlace.longitude) < 0.02
   );
 
   if (idx >= 0) {
-    favs.splice(idx, 1);
+    const removed = favs.splice(idx, 1)[0];
+    showToast((removed.customName || removed.name) + ' removed from favorites', 'info');
   } else {
     favs.push({
+      id: 'fav_' + Date.now(),
       name: currentPlace.name,
       region: currentPlace.region || '',
       latitude: currentPlace.latitude,
       longitude: currentPlace.longitude,
-      timezone: currentPlace.timezone || 'auto'
+      timezone: currentPlace.timezone || 'auto',
+      customName: '',
+      order: favs.length,
+      createdAt: Date.now()
     });
+    showToast(currentPlace.name + ' saved to favorites', 'success');
   }
 
   storage.set('northstar_favorites', favs);
@@ -774,13 +863,13 @@ async function renderFavoritesTray() {
   
   elements.favoritesGrid.innerHTML = favs
     .map((fav, index) => {
-      const safeName = escapeHtml(fav.name);
+      const displayName = fav.customName ? escapeHtml(fav.customName) + ' <small style="font-weight: normal; color: var(--ink-muted);">(' + escapeHtml(fav.name) + ')</small>' : escapeHtml(fav.name);
       const safeRegion = escapeHtml(fav.region);
       return `
       <article class="fav-snapshot-card" data-index="${index}" role="listitem">
         <div class="fav-card-top">
           <div>
-            <div class="fav-card-city">${safeName}</div>
+            <div class="fav-card-city">${displayName}</div>
             <div class="fav-card-region">${safeRegion}</div>
           </div>
           <button type="button" class="fav-remove-btn" data-remove="${index}" title="Remove from favorites">&times;</button>
@@ -1377,6 +1466,17 @@ function render(place, payload, options = false) {
   elements.card.dataset.weather = type.toLowerCase();
   elements.card.dataset.isDay = isDay ? 'true' : 'false';
 
+  let weatherState = 'clear-day';
+  const codeVal = current.weather_code;
+  if ([95, 96, 99].includes(codeVal)) weatherState = 'storm';
+  else if ([71, 73, 75, 77, 85, 86].includes(codeVal)) weatherState = 'snow';
+  else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(codeVal)) weatherState = 'rain';
+  else if ([45, 48].includes(codeVal)) weatherState = 'fog';
+  else if ([2, 3].includes(codeVal)) weatherState = 'cloudy';
+  else if (!isDay) weatherState = 'clear-night';
+  else weatherState = 'clear-day';
+  elements.card.setAttribute('data-weather-state', weatherState);
+
   
   elements.windSpeed.textContent = convertWind(current.wind_speed_10m);
   elements.windSpeedUnit.textContent = windSuffix();
@@ -1447,7 +1547,9 @@ function render(place, payload, options = false) {
 
   
   const { start } = renderHourly(hourly, current.time || new Date().toISOString());
-  renderTemperatureChart(hourly, start);
+  currentHourlyData = hourly;
+  currentHourlyStart = start;
+  renderInteractiveChart(hourly, start, currentChartMetric);
 
   
   const rainPhrase =
@@ -1518,8 +1620,10 @@ function render(place, payload, options = false) {
   
   const risks = evaluateWeatherRisks(current, daily, hourly);
   renderWeatherAlerts(risks);
+  generateDailyTimeline(current, daily, hourly, sunrise, sunset);
+  renderRiskCenter(current, daily, hourly);
+  applyDashboardSectionVisibility();
 
-  
   requestMapUpdate(place.latitude, place.longitude, place.name, `${temp}${temperatureSuffix()}`, summary);
   updateComparisonSlot1(place, payload);
   updateFavoriteButton();
@@ -1534,6 +1638,54 @@ function render(place, payload, options = false) {
     )}`;
     window.history.replaceState(null, '', newUrl);
   }
+}
+
+function renderSelectedHourDetail(hourly, srcIdx) {
+  if (!elements.selectedHourDetail || !hourly || !hourly.time || srcIdx == null) return;
+  elements.selectedHourDetail.hidden = false;
+  const time = hourly.time[srcIdx];
+  const [desc, type] = getWeatherLabel(hourly.weather_code[srcIdx]);
+  const temp = convertTemperature(hourly.temperature_2m[srcIdx]);
+  const feels = convertTemperature(hourly.apparent_temperature[srcIdx]);
+  const rainProb = safeNumber(hourly.precipitation_probability[srcIdx]);
+  const rainAmt = formatAmount(hourly.precipitation[srcIdx]);
+  const wind = convertWind(hourly.wind_speed_10m[srcIdx]);
+  const gusts = convertWind(hourly.wind_gusts_10m ? hourly.wind_gusts_10m[srcIdx] : 0);
+  const humidity = safeNumber(hourly.relative_humidity_2m[srcIdx]);
+  const clouds = safeNumber(hourly.cloud_cover[srcIdx]);
+  const dewPoint = convertTemperature(hourly.dew_point_2m ? hourly.dew_point_2m[srcIdx] : 0);
+  const uv = hourly.uv_index ? Number(hourly.uv_index[srcIdx]).toFixed(1) : '--';
+
+  elements.selectedHourDetail.innerHTML = `
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Hour</span>
+      <span class="hour-detail-val">${formatClock(time)}</span>
+    </div>
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Condition</span>
+      <span class="hour-detail-val">${desc}</span>
+    </div>
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Temperature</span>
+      <span class="hour-detail-val">${temp}${temperatureSuffix()} (Feels ${feels}${temperatureSuffix()})</span>
+    </div>
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Rain Probability</span>
+      <span class="hour-detail-val">${rainProb}% · ${rainAmt} mm</span>
+    </div>
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Wind &amp; Gusts</span>
+      <span class="hour-detail-val">${wind} ${windSuffix()} · Gusts ${gusts} ${windSuffix()}</span>
+    </div>
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Humidity &amp; Dew Point</span>
+      <span class="hour-detail-val">${humidity}% · Dew ${dewPoint}${temperatureSuffix()}</span>
+    </div>
+    <div class="hour-detail-item">
+      <span class="hour-detail-label">Cloud Cover &amp; UV</span>
+      <span class="hour-detail-val">${clouds}% · UV ${uv}</span>
+    </div>
+  `;
 }
 
 function renderHourly(hourly, currentTime) {
@@ -1555,12 +1707,13 @@ function renderHourly(hourly, currentTime) {
       const temp = convertTemperature(hourly.temperature_2m[srcIdx]);
       const feels = convertTemperature(hourly.apparent_temperature[srcIdx]);
       const isCurrent = index === 0;
+      const isSelected = srcIdx === selectedHourIndex;
 
       const hourNum = Number(String(time).slice(11, 13));
       const isDayHour = hourNum >= 6 && hourNum < 20;
 
       return `
-        <article class="hour-item ${isCurrent ? 'is-current' : ''}">
+        <article class="hour-item ${isCurrent ? 'is-current' : ''} ${isSelected ? 'is-selected' : ''}" data-src-idx="${srcIdx}" tabindex="0" role="button" aria-label="${formatClock(time)} ${temp} degrees">
           <div class="hour-time">${isCurrent ? 'Now' : formatClock(time)}</div>
           <div class="hour-icon" aria-hidden="true">${getWeatherIconSvg(type, isDayHour)}</div>
           <strong>${temp}${temperatureSuffix()}</strong>
@@ -1576,40 +1729,107 @@ function renderHourly(hourly, currentTime) {
     })
     .join('');
 
-  elements.hourlyNote.textContent = `${hours.length} hours · scroll for more`;
+  elements.hourlyList.querySelectorAll('.hour-item').forEach((card) => {
+    card.addEventListener('click', () => {
+      const idx = Number(card.dataset.srcIdx);
+      selectedHourIndex = idx;
+      elements.hourlyList.querySelectorAll('.hour-item').forEach((c) => c.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      renderSelectedHourDetail(hourly, idx);
+    });
+  });
+
+  elements.hourlyNote.textContent = `${hours.length} hours · click hour to inspect`;
   return { start, hours };
 }
 
-function renderTemperatureChart(hourly, start) {
+function renderInteractiveChart(hourly, start, metric = currentChartMetric) {
   if (!hourly || !hourly.time || !hourly.time.length) {
-    elements.temperatureChart.innerHTML = '<div class="air-quality-empty">Temperature trend unavailable.</div>';
+    elements.temperatureChart.innerHTML = '<div class="air-quality-empty">Atmospheric trend unavailable.</div>';
     return;
   }
 
   const times = hourly.time.slice(start, start + 12);
-  const actualTemps = hourly.temperature_2m.slice(start, start + 12).map((v) => safeNumber(v));
-  const feelsTemps = hourly.apparent_temperature.slice(start, start + 12).map((v) => safeNumber(v));
+  let v1 = [];
+  let v2 = [];
+  let unit1 = '';
+  let unit2 = '';
+  let label1 = '';
+  let label2 = '';
+  let title = '';
 
-  const all = actualTemps.concat(feelsTemps);
-  const minTemp = Math.min(...all) - 2;
-  const maxTemp = Math.max(...all) + 2;
-  const range = Math.max(1, maxTemp - minTemp);
+  const parseNum = (val) => {
+    if (val == null) return 0;
+    const n = Number(val);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  if (metric === 'precipitation') {
+    title = 'Precipitation probability & volume';
+    label1 = 'rain probability';
+    label2 = 'volume';
+    unit1 = '%';
+    unit2 = ' mm';
+    v1 = (hourly.precipitation_probability || []).slice(start, start + 12).map((v) => parseNum(v));
+    v2 = (hourly.precipitation || []).slice(start, start + 12).map((v) => parseNum(formatAmount(v)));
+  } else if (metric === 'wind') {
+    title = 'Wind speed & gusts';
+    label1 = 'wind speed';
+    label2 = 'gusts';
+    unit1 = ' ' + windSuffix();
+    unit2 = ' ' + windSuffix();
+    v1 = (hourly.wind_speed_10m || []).slice(start, start + 12).map((v) => parseNum(convertWind(v)));
+    const gustsSrc = (hourly.wind_gusts_10m && hourly.wind_gusts_10m.length) ? hourly.wind_gusts_10m : (hourly.wind_speed_10m || []);
+    v2 = gustsSrc.slice(start, start + 12).map((v) => parseNum(convertWind(v)));
+  } else if (metric === 'humidity') {
+    title = 'Relative humidity & cloud cover';
+    label1 = 'humidity';
+    label2 = 'cloud cover';
+    unit1 = '%';
+    unit2 = '%';
+    v1 = (hourly.relative_humidity_2m || []).slice(start, start + 12).map((v) => parseNum(v));
+    v2 = (hourly.cloud_cover || []).slice(start, start + 12).map((v) => parseNum(v));
+  } else {
+    title = 'Temperature & feels like';
+    label1 = 'temperature';
+    label2 = 'feels like';
+    unit1 = temperatureSuffix();
+    unit2 = temperatureSuffix();
+    v1 = (hourly.temperature_2m || []).slice(start, start + 12).map((v) => parseNum(convertTemperature(v)));
+    v2 = (hourly.apparent_temperature || []).slice(start, start + 12).map((v) => parseNum(convertTemperature(v)));
+  }
+
+  if (elements.chartPanelHeading) elements.chartPanelHeading.textContent = title;
+  if (elements.legendItem1) elements.legendItem1.innerHTML = '<i></i> ' + label1;
+  if (elements.legendItem2) elements.legendItem2.innerHTML = '<i></i> ' + label2;
+
+  const all = v1.concat(v2);
+  let minVal = Math.min(...all);
+  let maxVal = Math.max(...all);
+  if (!Number.isFinite(minVal) || !Number.isFinite(maxVal) || minVal === maxVal) {
+    minVal = Math.max(0, minVal - 5);
+    maxVal = minVal + 10;
+  } else {
+    minVal = metric === 'temperature' ? minVal - 2 : Math.max(0, minVal - 2);
+    maxVal = maxVal + 2;
+  }
+  const range = Math.max(1, maxVal - minVal);
 
   const getCoord = (val, idx, total) => {
     const x = Math.round((idx / Math.max(1, total - 1)) * 100);
-    const y = Math.round(100 - ((val - minTemp) / range) * 85 - 8);
-    return { x, y };
+    const y = Math.round(100 - ((val - minVal) / range) * 85 - 8);
+    return { x, y: Math.max(5, Math.min(95, y)) };
   };
 
-  const actualPoints = actualTemps.map((v, i) => getCoord(v, i, actualTemps.length));
-  const feelsPoints = feelsTemps.map((v, i) => getCoord(v, i, feelsTemps.length));
+  const p1 = v1.map((v, i) => getCoord(v, i, v1.length));
+  const p2 = v2.map((v, i) => getCoord(v, i, v2.length));
 
-  const actualPolyline = actualPoints.map((p) => `${p.x},${p.y}`).join(' ');
-  const feelsPolyline = feelsPoints.map((p) => `${p.x},${p.y}`).join(' ');
-  const areaPolygon = `0,100 ${actualPolyline} 100,100`;
+  const poly1 = p1.map((p) => `${p.x},${p.y}`).join(' ');
+  const poly2 = p2.map((p) => `${p.x},${p.y}`).join(' ');
+  const areaPolygon = `0,100 ${poly1} 100,100`;
 
   elements.temperatureChart.innerHTML = `
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Temperature trendline">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(title)} trendline">
       <defs>
         <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#eb7c3b" stop-opacity="0.35"/>
@@ -1619,15 +1839,15 @@ function renderTemperatureChart(hourly, start) {
       <line class="chart-grid" x1="0" y1="20" x2="100" y2="20"></line>
       <line class="chart-grid" x1="0" y1="50" x2="100" y2="50"></line>
       <line class="chart-grid" x1="0" y1="80" x2="100" y2="80"></line>
-      <polygon class="chart-area" points="${areaPolygon}"></polygon>
-      <polyline class="chart-line chart-feels" points="${feelsPolyline}"></polyline>
-      <polyline class="chart-line" points="${actualPolyline}"></polyline>
-      ${actualPoints
+      <polygon class="chart-area" points="${areaPolygon}" fill="url(#tempGradient)"></polygon>
+      <polyline class="chart-line chart-feels" points="${poly2}"></polyline>
+      <polyline class="chart-line" points="${poly1}"></polyline>
+      ${p1
         .map(
           (p, i) => `
         <circle class="chart-point" cx="${p.x}" cy="${p.y}" data-idx="${i}" tabindex="0" aria-label="${formatClock(
             times[i]
-          )}: ${convertTemperature(actualTemps[i])}${temperatureSuffix()}"></circle>
+          )}: ${v1[i]}${unit1} / ${v2[i]}${unit2}"></circle>
       `
         )
         .join('')}
@@ -1644,17 +1864,28 @@ function renderTemperatureChart(hourly, start) {
     point.addEventListener('mouseenter', () => {
       const idx = Number(point.dataset.idx);
       const time = formatClock(times[idx]);
-      const act = convertTemperature(actualTemps[idx]);
-      const app = convertTemperature(feelsTemps[idx]);
       elements.chartTooltip.hidden = false;
-      elements.chartTooltip.textContent = `${time} · ${act}${temperatureSuffix()} (Feels ${app}${temperatureSuffix()})`;
+      elements.chartTooltip.textContent = `${time} · ${v1[idx]}${unit1} (${label1}) · ${v2[idx]}${unit2} (${label2})`;
       const rect = point.getBoundingClientRect();
       const parentRect = elements.temperatureChart.getBoundingClientRect();
-      elements.chartTooltip.style.left = `${rect.left - parentRect.left + rect.width / 2}px`;
-      elements.chartTooltip.style.top = `${rect.top - parentRect.top - 8}px`;
+      const left = rect.left - parentRect.left + rect.width / 2;
+      const top = rect.top - parentRect.top - 8;
+      elements.chartTooltip.style.left = `${Math.max(40, Math.min(parentRect.width - 40, left))}px`;
+      elements.chartTooltip.style.top = `${Math.max(10, top)}px`;
     });
 
     point.addEventListener('mouseleave', () => {
+      elements.chartTooltip.hidden = true;
+    });
+
+    point.addEventListener('focus', () => {
+      const idx = Number(point.dataset.idx);
+      const time = formatClock(times[idx]);
+      elements.chartTooltip.hidden = false;
+      elements.chartTooltip.textContent = `${time} · ${v1[idx]}${unit1} · ${v2[idx]}${unit2}`;
+    });
+
+    point.addEventListener('blur', () => {
       elements.chartTooltip.hidden = true;
     });
   });
@@ -1757,15 +1988,15 @@ function render7DayForecast(daily) {
 
   elements.forecast.innerHTML = daily.time
     .map((day, idx) => {
-      const [desc, type] = getWeatherLabel(daily.weather_code?.[idx]);
-      const maxT = convertTemperature(daily.temperature_2m_max?.[idx]);
-      const minT = convertTemperature(daily.temperature_2m_min?.[idx]);
-      const rainProb = safeNumber(daily.precipitation_probability_max?.[idx]);
-      const windMax = convertWind(daily.wind_speed_10m_max?.[idx]);
+      const [desc, type] = getWeatherLabel(daily.weather_code ? daily.weather_code[idx] : null);
+      const maxT = convertTemperature(daily.temperature_2m_max ? daily.temperature_2m_max[idx] : null);
+      const minT = convertTemperature(daily.temperature_2m_min ? daily.temperature_2m_min[idx] : null);
+      const rainProb = safeNumber(daily.precipitation_probability_max ? daily.precipitation_probability_max[idx] : 0);
+      const windMax = convertWind(daily.wind_speed_10m_max ? daily.wind_speed_10m_max[idx] : 0);
       const isToday = idx === 0;
 
       return `
-        <article class="forecast-item ${isToday ? 'is-today' : ''}">
+        <article class="forecast-item ${isToday ? 'is-today' : ''}" data-day-index="${idx}" tabindex="0" role="button" aria-expanded="false" aria-label="${formatDay(day, idx)} forecast">
           <div class="forecast-day">
             ${formatDay(day, idx)}
             <small>${day.slice(5).replace('-', '/')}</small>
@@ -1773,17 +2004,34 @@ function render7DayForecast(daily) {
           <div class="forecast-icon" aria-hidden="true">${getWeatherIconSvg(type, true)}</div>
           <div class="forecast-temp">
             ${maxT}${temperatureSuffix()}
-            <span>/ ${minT}${temperatureSuffix()}</span>
+            <small>${minT}${temperatureSuffix()}</small>
           </div>
-          <div class="forecast-note">${desc}</div>
+          <div class="forecast-summary">${desc}</div>
           <div class="forecast-rain">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-            ${rainProb}% · ${windMax} ${windSuffix()}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+            ${rainProb}%
+            <span class="day-expand-btn" aria-hidden="true">&#9662;</span>
+          </div>
+          <div class="forecast-detail-drawer" id="dayDetail_${idx}" hidden>
+            <div><span>Peak Wind:</span> <strong>${windMax} ${windSuffix()}</strong></div>
+            <div><span>Max UV:</span> <strong>${daily.uv_index_max && daily.uv_index_max[idx] != null ? Number(daily.uv_index_max[idx]).toFixed(1) : '--'}</strong></div>
+            <div><span>Rain Sum:</span> <strong>${daily.precipitation_sum && daily.precipitation_sum[idx] != null ? Number(daily.precipitation_sum[idx]).toFixed(1) + ' mm' : '--'}</strong></div>
+            <div><span>Sunrise:</span> <strong>${daily.sunrise && daily.sunrise[idx] ? formatClock(daily.sunrise[idx]) : '--'}</strong></div>
+            <div><span>Sunset:</span> <strong>${daily.sunset && daily.sunset[idx] ? formatClock(daily.sunset[idx]) : '--'}</strong></div>
           </div>
         </article>
       `;
     })
     .join('');
+
+  elements.forecast.querySelectorAll('.forecast-item').forEach((card) => {
+    card.addEventListener('click', () => {
+      const isExpanded = card.classList.toggle('is-expanded');
+      card.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      const drawer = card.querySelector('.forecast-detail-drawer');
+      if (drawer) drawer.hidden = !isExpanded;
+    });
+  });
 }
 
 function synthesizeWeatherIntelligence({ current, daily, summary, todayHigh, todayLow, precipProb, uv, apparent, temp }) {
@@ -2122,6 +2370,597 @@ elements.favoritesGrid.addEventListener('click', (e) => {
   }
 });
 
+function generateDailyTimeline(current, daily, hourly, sunrise, sunset) {
+  if (!elements.dailyTimeline || !daily) return;
+  const nodes = [];
+
+  if (sunrise) {
+    nodes.push({
+      time: formatClock(sunrise),
+      title: 'Sunrise & Morning Light',
+      desc: 'Astronomical daylight starts, solar elevation begins ascending.'
+    });
+  }
+
+  if (hourly && hourly.time && hourly.time.length) {
+    const next12 = hourly.time.slice(0, 14);
+    let maxUvIdx = -1;
+    let maxUvVal = -1;
+    let maxTempIdx = -1;
+    let maxTempVal = -999;
+    let rainRiskIdx = -1;
+    let rainRiskVal = 0;
+
+    next12.forEach((t, i) => {
+      const uv = safeNumber(hourly.uv_index ? hourly.uv_index[i] : null);
+      if (uv > maxUvVal) {
+        maxUvVal = uv;
+        maxUvIdx = i;
+      }
+      const temp = safeNumber(hourly.temperature_2m ? hourly.temperature_2m[i] : null);
+      if (temp > maxTempVal) {
+        maxTempVal = temp;
+        maxTempIdx = i;
+      }
+      const prob = safeNumber(hourly.precipitation_probability ? hourly.precipitation_probability[i] : null);
+      if (prob > rainRiskVal && prob >= 30) {
+        rainRiskVal = prob;
+        rainRiskIdx = i;
+      }
+    });
+
+    if (maxUvIdx >= 0 && maxUvVal >= 3) {
+      nodes.push({
+        time: formatClock(hourly.time[maxUvIdx]),
+        title: 'Solar Noon / UV Peak (' + maxUvVal.toFixed(1) + ')',
+        desc: maxUvVal >= 6 ? 'Maximum ultraviolet intensity. Sun protection advised.' : 'Moderate ultraviolet index.'
+      });
+    }
+
+    if (maxTempIdx >= 0) {
+      nodes.push({
+        time: formatClock(hourly.time[maxTempIdx]),
+        title: 'Diurnal Peak (' + convertTemperature(maxTempVal) + temperatureSuffix() + ')',
+        desc: 'Maximum forecasted thermometer reading for the day.'
+      });
+    }
+
+    if (rainRiskIdx >= 0) {
+      nodes.push({
+        time: formatClock(hourly.time[rainRiskIdx]),
+        title: 'Precipitation Risk Window (' + rainRiskVal + '%)',
+        desc: 'Elevated precipitation probability detected in forecast model.'
+      });
+    }
+  }
+
+  if (sunset) {
+    nodes.push({
+      time: formatClock(sunset),
+      title: 'Sunset & Twilight',
+      desc: 'Daylight transitions into nautical dusk.'
+    });
+  }
+
+  nodes.sort((a, b) => a.time.localeCompare(b.time));
+
+  elements.dailyTimeline.innerHTML = nodes
+    .map(
+      (n) => `
+      <div class="timeline-node">
+        <span class="timeline-time">${n.time}</span>
+        <strong class="timeline-title">${n.title}</strong>
+        <span class="timeline-desc">${n.desc}</span>
+      </div>
+    `
+    )
+    .join('');
+}
+
+function renderRiskCenter(current, daily, hourly) {
+  if (!elements.riskCenterGrid) return;
+  const alertRules = storage.get('northstar_alert_rules', defaultAlertRules);
+
+  const curTemp = safeNumber(current.temperature_2m);
+  const maxRainProb = safeNumber(daily.precipitation_probability_max ? daily.precipitation_probability_max[0] : 0);
+  const gust = convertWind(current.wind_gusts_10m || 0);
+  const uv = safeNumber(current.uv_index);
+  const aqiVal = safeNumber(currentData && currentData.airQuality && currentData.airQuality.current ? currentData.airQuality.current.us_aqi : null);
+
+  const risks = [
+    {
+      label: 'Precipitation',
+      val: maxRainProb + '% chance',
+      level: maxRainProb >= 60 ? 'high' : maxRainProb >= 30 ? 'mod' : 'low',
+      badge: maxRainProb >= 60 ? 'Rain Expected' : maxRainProb >= 30 ? 'Scattered' : 'Dry'
+    },
+    {
+      label: 'Thermal Comfort',
+      val: convertTemperature(curTemp) + temperatureSuffix(),
+      level: curTemp >= 36 || curTemp <= 4 ? 'high' : curTemp >= 32 || curTemp <= 10 ? 'mod' : 'low',
+      badge: curTemp >= 36 ? 'Extreme Heat' : curTemp <= 4 ? 'Freezing' : 'Comfortable'
+    },
+    {
+      label: 'Wind Gusts',
+      val: gust + ' ' + windSuffix(),
+      level: gust >= 50 ? 'high' : gust >= 35 ? 'mod' : 'low',
+      badge: gust >= 50 ? 'Gale Gusts' : gust >= 35 ? 'Breezy' : 'Gentle'
+    },
+    {
+      label: 'UV Hazard',
+      val: 'Index ' + uv.toFixed(1),
+      level: uv >= 7 ? 'high' : uv >= 4 ? 'mod' : 'low',
+      badge: uv >= 7 ? 'Very High' : uv >= 4 ? 'Moderate' : 'Low'
+    }
+  ];
+
+  if (aqiVal > 0) {
+    risks.push({
+      label: 'Air Quality',
+      val: 'AQI ' + aqiVal,
+      level: aqiVal >= 150 ? 'high' : aqiVal >= 100 ? 'mod' : 'low',
+      badge: aqiVal >= 150 ? 'Unhealthy' : aqiVal >= 100 ? 'Sensitive' : 'Satisfactory'
+    });
+  }
+
+  let customTriggered = null;
+  if (alertRules && alertRules.enabled) {
+    if (maxRainProb >= alertRules.rainThreshold) {
+      customTriggered = 'Rain probability (' + maxRainProb + '%) exceeds your ' + alertRules.rainThreshold + '% threshold.';
+    } else if (curTemp >= alertRules.tempThreshold) {
+      customTriggered = 'Temperature (' + curTemp + '°C) exceeds your ' + alertRules.tempThreshold + '°C threshold.';
+    } else if (aqiVal >= alertRules.aqiThreshold) {
+      customTriggered = 'Air Quality AQI (' + aqiVal + ') exceeds your ' + alertRules.aqiThreshold + ' threshold.';
+    }
+  }
+
+  let html = risks
+    .map(
+      (r) => `
+    <div class="risk-item">
+      <span class="risk-item-label">${escapeHtml(r.label)}</span>
+      <span class="risk-item-val">${escapeHtml(r.val)}</span>
+      <span class="risk-badge risk-badge-${r.level}">${escapeHtml(r.badge)}</span>
+    </div>
+  `
+    )
+    .join('');
+
+  if (customTriggered) {
+    html = `
+      <div class="risk-item" style="grid-column: 1 / -1; background: var(--orange-soft); border-color: var(--orange);">
+        <span class="risk-item-label" style="color: var(--orange-deep);">Advisory rule matched</span>
+        <strong style="color: var(--ink); font-size: 13px;">${escapeHtml(customTriggered)}</strong>
+      </div>
+    ` + html;
+  }
+
+  elements.riskCenterGrid.innerHTML = html;
+}
+
+function openCommandPalette() {
+  if (!elements.commandPaletteBackdrop) return;
+  elements.commandPaletteBackdrop.hidden = false;
+  elements.commandPaletteInput.value = '';
+  elements.commandPaletteInput.focus();
+  commandPaletteSelectedIndex = -1;
+  renderCommandPaletteDefaultSections();
+}
+
+function closeCommandPalette() {
+  if (!elements.commandPaletteBackdrop) return;
+  elements.commandPaletteBackdrop.hidden = true;
+  commandPaletteSelectedIndex = -1;
+}
+
+function renderCommandPaletteDefaultSections() {
+  const favs = getFavorites();
+  if (favs.length) {
+    elements.cmdFavoritesSection.hidden = false;
+    elements.cmdFavoritesList.innerHTML = favs
+      .map(
+        (f, idx) => `
+        <button type="button" class="cmd-item" data-type="fav" data-idx="${idx}">
+          <span style="color: var(--orange); font-size: 14px;">★</span>
+          <div class="cmd-item-content">
+            <strong>${escapeHtml(f.customName || f.name)}</strong>
+            <small>${escapeHtml(f.region || f.name)}</small>
+          </div>
+          <span class="cmd-item-badge">Favorite</span>
+        </button>
+      `
+      )
+      .join('');
+  } else {
+    elements.cmdFavoritesSection.hidden = true;
+  }
+
+  const recents = storage.get('northstar_recent_searches', []);
+  if (recents.length) {
+    elements.cmdRecentsSection.hidden = false;
+    elements.cmdRecentsList.innerHTML = recents
+      .map(
+        (r, idx) => `
+        <button type="button" class="cmd-item" data-type="recent" data-idx="${idx}">
+          <span style="color: var(--ink-muted); font-size: 13px;">⏱</span>
+          <div class="cmd-item-content">
+            <strong>${escapeHtml(r.name)}</strong>
+            <small>${escapeHtml(r.region || '')}</small>
+          </div>
+          <span class="cmd-item-badge">Recent</span>
+        </button>
+      `
+      )
+      .join('');
+  } else {
+    elements.cmdRecentsSection.hidden = true;
+  }
+
+  elements.cmdSearchResultsSection.hidden = true;
+  wireCommandPaletteItemClicks();
+}
+
+function wireCommandPaletteItemClicks() {
+  elements.commandPaletteResults.querySelectorAll('.cmd-item').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const type = btn.dataset.type;
+      const idx = Number(btn.dataset.idx);
+      closeCommandPalette();
+
+      if (type === 'fav') {
+        const favs = getFavorites();
+        if (favs[idx]) await loadWeatherWithPlace(favs[idx]);
+      } else if (type === 'recent') {
+        const recents = storage.get('northstar_recent_searches', []);
+        if (recents[idx]) await loadWeatherWithPlace(recents[idx]);
+      } else if (type === 'search') {
+        if (commandPaletteItems[idx]) {
+          const chosen = commandPaletteItems[idx];
+          chosen.region = [chosen.admin1, chosen.country].filter(Boolean).join(', ');
+          await loadWeatherWithPlace(chosen);
+        }
+      }
+    });
+  });
+}
+
+function openSettingsDrawer() {
+  if (!elements.settingsDrawer) return;
+  elements.settingsBackdrop.hidden = false;
+  elements.settingsDrawer.hidden = false;
+  populateSettingsDrawer();
+}
+
+function closeSettingsDrawer() {
+  if (!elements.settingsDrawer) return;
+  elements.settingsBackdrop.hidden = true;
+  elements.settingsDrawer.hidden = true;
+}
+
+function populateSettingsDrawer() {
+  document.querySelectorAll('[data-theme-choice]').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.themeChoice === currentTheme);
+  });
+
+  document.querySelectorAll('[data-temp-choice]').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.tempChoice === temperatureUnit);
+  });
+
+  document.querySelectorAll('[data-wind-choice]').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.windChoice === windUnit);
+  });
+
+  const sections = storage.get('northstar_dashboard_sections', defaultDashboardSections);
+  document.querySelectorAll('[data-section-target]').forEach((cb) => {
+    cb.checked = sections[cb.dataset.sectionTarget] !== false;
+  });
+
+  const alerts = storage.get('northstar_alert_rules', defaultAlertRules);
+  if (elements.alertThresholdRain) elements.alertThresholdRain.value = alerts.rainThreshold || 60;
+  if (elements.alertThresholdTemp) elements.alertThresholdTemp.value = alerts.tempThreshold || 38;
+  if (elements.alertThresholdAqi) elements.alertThresholdAqi.value = alerts.aqiThreshold || 100;
+
+  const favs = getFavorites();
+  if (!favs.length) {
+    elements.settingsFavsList.innerHTML = '<div style="font-size: 12px; color: var(--ink-muted);">No saved locations.</div>';
+  } else {
+    elements.settingsFavsList.innerHTML = favs
+      .map(
+        (f, idx) => `
+        <div class="fav-manage-item">
+          <input type="text" class="fav-manage-input" data-fav-idx="${idx}" value="${escapeHtml(f.customName || f.name)}" placeholder="Custom label">
+          <small style="color: var(--ink-muted);">${escapeHtml(f.region || f.name)}</small>
+          <button type="button" class="fav-delete-btn" data-fav-delete="${idx}" title="Delete favorite">&times;</button>
+        </div>
+      `
+      )
+      .join('');
+
+    elements.settingsFavsList.querySelectorAll('[data-fav-delete]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.favDelete);
+        const curFavs = getFavorites();
+        if (curFavs[idx]) {
+          const removed = curFavs.splice(idx, 1)[0];
+          storage.set('northstar_favorites', curFavs);
+          updateFavoriteButton();
+          renderFavoritesTray();
+          populateSettingsDrawer();
+          showToast(removed.name + ' removed from favorites', 'info');
+        }
+      });
+    });
+
+    elements.settingsFavsList.querySelectorAll('.fav-manage-input').forEach((input) => {
+      input.addEventListener('change', () => {
+        const idx = Number(input.dataset.favIdx);
+        const curFavs = getFavorites();
+        if (curFavs[idx]) {
+          curFavs[idx].customName = input.value.trim();
+          storage.set('northstar_favorites', curFavs);
+          renderFavoritesTray();
+        }
+      });
+    });
+  }
+}
+
+function saveAndApplySettings() {
+  const sections = {};
+  document.querySelectorAll('[data-section-target]').forEach((cb) => {
+    sections[cb.dataset.sectionTarget] = cb.checked;
+  });
+  storage.set('northstar_dashboard_sections', sections);
+  applyDashboardSectionVisibility();
+
+  const alerts = {
+    rainThreshold: Number(elements.alertThresholdRain ? elements.alertThresholdRain.value : 60) || 60,
+    tempThreshold: Number(elements.alertThresholdTemp ? elements.alertThresholdTemp.value : 38) || 38,
+    aqiThreshold: Number(elements.alertThresholdAqi ? elements.alertThresholdAqi.value : 100) || 100,
+    enabled: true
+  };
+  storage.set('northstar_alert_rules', alerts);
+
+  if (currentData && currentData.forecast) {
+    renderRiskCenter(currentData.forecast.current, currentData.forecast.daily, currentData.forecast.hourly);
+  }
+
+  showToast('Settings saved & applied', 'success');
+  closeSettingsDrawer();
+}
+
+function applyDashboardSectionVisibility() {
+  const sections = storage.get('northstar_dashboard_sections', defaultDashboardSections);
+  Object.keys(sections).forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.hidden = !sections[id];
+    }
+  });
+}
+
+function setupSubnavScrollSpy() {
+  const sectionIds = [
+    'heroSection',
+    'conditionsSection',
+    'hourlySection',
+    'intelligenceSection',
+    'precipSection',
+    'celestialSection',
+    'airQualitySection',
+    'mapSection',
+    'compareSection',
+    'outlookSection'
+  ];
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            document.querySelectorAll('.subnav-link').forEach((link) => {
+              const isActive = link.dataset.section === id;
+              link.classList.toggle('is-active', isActive);
+              link.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+          }
+        });
+      },
+      { rootMargin: '-70px 0px -65% 0px' }
+    );
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  }
+
+  document.querySelectorAll('.subnav-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      const targetId = link.getAttribute('href');
+      if (targetId && targetId.startsWith('#')) {
+        e.preventDefault();
+        const targetEl = document.querySelector(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  });
+}
+
+function setupMultiMetricChartSwitcher() {
+  document.querySelectorAll('.chart-metric-pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chart-metric-pill').forEach((b) => {
+        b.classList.remove('is-active');
+        b.setAttribute('aria-checked', 'false');
+      });
+      btn.classList.add('is-active');
+      btn.setAttribute('aria-checked', 'true');
+      currentChartMetric = btn.dataset.metric;
+      if (currentHourlyData) {
+        renderInteractiveChart(currentHourlyData, currentHourlyStart, currentChartMetric);
+      }
+    });
+  });
+}
+
+function setupCommandPalette() {
+  if (elements.openCommandPaletteBtn) {
+    elements.openCommandPaletteBtn.addEventListener('click', openCommandPalette);
+  }
+  if (elements.topbarCmdBtn) {
+    elements.topbarCmdBtn.addEventListener('click', openCommandPalette);
+  }
+  if (elements.locationSwitcherChip) {
+    elements.locationSwitcherChip.addEventListener('click', openCommandPalette);
+  }
+  if (elements.closeCommandPaletteBtn) {
+    elements.closeCommandPaletteBtn.addEventListener('click', closeCommandPalette);
+  }
+  if (elements.commandPaletteBackdrop) {
+    elements.commandPaletteBackdrop.addEventListener('click', (e) => {
+      if (e.target === elements.commandPaletteBackdrop) closeCommandPalette();
+    });
+  }
+
+  if (elements.cmdCurrentLocationAction) {
+    elements.cmdCurrentLocationAction.addEventListener('click', () => {
+      closeCommandPalette();
+      detectAndLoadUserLocation({ isBoot: false });
+    });
+  }
+
+  if (elements.commandPaletteInput) {
+    elements.commandPaletteInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      clearTimeout(commandSearchTimer);
+      if (query.length < 2) {
+        renderCommandPaletteDefaultSections();
+        return;
+      }
+      commandSearchTimer = setTimeout(async () => {
+        const results = await searchCities(query);
+        commandPaletteItems = results;
+        if (results.length) {
+          elements.cmdFavoritesSection.hidden = true;
+          elements.cmdRecentsSection.hidden = true;
+          elements.cmdSearchResultsSection.hidden = false;
+          elements.cmdSearchResultsList.innerHTML = results
+            .map(
+              (r, idx) => `
+              <button type="button" class="cmd-item" data-type="search" data-idx="${idx}">
+                <span style="color: var(--ink-muted); font-size: 13px;">📍</span>
+                <div class="cmd-item-content">
+                  <strong>${escapeHtml(r.name)}</strong>
+                  <small>${escapeHtml([r.admin1, r.country].filter(Boolean).join(', '))}</small>
+                </div>
+                <span class="cmd-item-badge">Result</span>
+              </button>
+            `
+            )
+            .join('');
+          wireCommandPaletteItemClicks();
+        } else {
+          elements.cmdSearchResultsSection.hidden = false;
+          elements.cmdSearchResultsList.innerHTML = '<div style="padding: 10px; font-size: 12px; color: var(--ink-muted);">No locations found</div>';
+        }
+      }, 220);
+    });
+
+    elements.commandPaletteInput.addEventListener('keydown', (e) => {
+      const items = Array.from(elements.commandPaletteResults.querySelectorAll('.cmd-item'));
+      if (!items.length) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        commandPaletteSelectedIndex = (commandPaletteSelectedIndex + 1) % items.length;
+        items.forEach((it, i) => it.classList.toggle('is-selected', i === commandPaletteSelectedIndex));
+        items[commandPaletteSelectedIndex].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        commandPaletteSelectedIndex = (commandPaletteSelectedIndex - 1 + items.length) % items.length;
+        items.forEach((it, i) => it.classList.toggle('is-selected', i === commandPaletteSelectedIndex));
+        items[commandPaletteSelectedIndex].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (commandPaletteSelectedIndex >= 0 && items[commandPaletteSelectedIndex]) {
+          items[commandPaletteSelectedIndex].click();
+        } else if (items[0]) {
+          items[0].click();
+        }
+      }
+    });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      openCommandPalette();
+    } else if (e.key === 'Escape') {
+      closeCommandPalette();
+      closeSettingsDrawer();
+    }
+  });
+}
+
+function setupSettingsDrawer() {
+  if (elements.openSettingsBtn) {
+    elements.openSettingsBtn.addEventListener('click', openSettingsDrawer);
+  }
+  if (elements.topbarSettingsBtn) {
+    elements.topbarSettingsBtn.addEventListener('click', openSettingsDrawer);
+  }
+  if (elements.closeSettingsBtn) {
+    elements.closeSettingsBtn.addEventListener('click', closeSettingsDrawer);
+  }
+  if (elements.settingsBackdrop) {
+    elements.settingsBackdrop.addEventListener('click', closeSettingsDrawer);
+  }
+  if (elements.saveSettingsBtn) {
+    elements.saveSettingsBtn.addEventListener('click', saveAndApplySettings);
+  }
+
+  document.querySelectorAll('[data-theme-choice]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      applyTheme(btn.dataset.themeChoice);
+      document.querySelectorAll('[data-theme-choice]').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+    });
+  });
+
+  document.querySelectorAll('[data-temp-choice]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      temperatureUnit = btn.dataset.tempChoice;
+      document.querySelectorAll('[data-temp-choice]').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      elements.unitOptions.forEach((opt) => opt.classList.toggle('is-active', opt.dataset.unit === temperatureUnit));
+      const prefs = storage.get('northstar_preferences', {});
+      prefs.tempUnit = temperatureUnit;
+      storage.set('northstar_preferences', prefs);
+      if (currentPlace && currentData) render(currentPlace, currentData);
+      renderComparisonTable();
+      renderFavoritesTray();
+    });
+  });
+
+  document.querySelectorAll('[data-wind-choice]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      windUnit = btn.dataset.windChoice;
+      document.querySelectorAll('[data-wind-choice]').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      elements.windUnitOptions.forEach((opt) => opt.classList.toggle('is-active', opt.dataset.windUnit === windUnit));
+      const prefs = storage.get('northstar_preferences', {});
+      prefs.windUnit = windUnit;
+      storage.set('northstar_preferences', prefs);
+      if (currentPlace && currentData) render(currentPlace, currentData);
+      renderComparisonTable();
+    });
+  });
+}
+
 elements.shareButton.addEventListener('click', async () => {
   if (!currentPlace || !currentData) return;
   const cur = currentData.forecast.current;
@@ -2130,8 +2969,8 @@ elements.shareButton.addEventListener('click', async () => {
   const shareText = `Northstar Weather · ${currentPlace.name}: ${convertTemperature(
     cur.temperature_2m
   )}${temperatureSuffix()}, ${desc} (High ${convertTemperature(
-    daily.temperature_2m_max?.[0]
-  )}° / Low ${convertTemperature(daily.temperature_2m_min?.[0])}°). Check live: ${window.location.href}`;
+    daily.temperature_2m_max ? daily.temperature_2m_max[0] : null
+  )}° / Low ${convertTemperature(daily.temperature_2m_min ? daily.temperature_2m_min[0] : null)}°). Check live: ${window.location.href}`;
 
   if (navigator.share) {
     try {
@@ -2140,6 +2979,7 @@ elements.shareButton.addEventListener('click', async () => {
         text: shareText,
         url: window.location.href
       });
+      showToast('Weather shared successfully', 'success');
       return;
     } catch {
       
@@ -2148,13 +2988,9 @@ elements.shareButton.addEventListener('click', async () => {
 
   try {
     await navigator.clipboard.writeText(shareText);
-    elements.shareFeedback.hidden = false;
-    elements.shareFeedback.textContent = 'Atmospheric summary copied to clipboard.';
-    setTimeout(() => {
-      elements.shareFeedback.hidden = true;
-    }, 4000);
+    showToast('Weather summary copied to clipboard', 'success');
   } catch {
-    alert(shareText);
+    showToast('Unable to copy to clipboard', 'warning');
   }
 });
 
@@ -2258,8 +3094,13 @@ document.addEventListener('click', (e) => {
 });
 
 function boot() {
-  
   applyTheme(currentTheme);
+  applyDashboardSectionVisibility();
+  setupSubnavScrollSpy();
+  setupMultiMetricChartSwitcher();
+  setupCommandPalette();
+  setupSettingsDrawer();
+
 
   
   const prefs = storage.get('northstar_preferences', {});

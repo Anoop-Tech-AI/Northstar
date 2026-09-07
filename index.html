@@ -71,16 +71,51 @@
             </svg>
             <span>Auto</span>
           </button>
+          <button type="button" class="topbar-cmd-btn" id="topbarCmdBtn" title="Quick search (Ctrl+K)" aria-label="Open search palette">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="15" height="15" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span class="topbar-cmd-kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+          </button>
+          <button type="button" class="topbar-settings-btn" id="topbarSettingsBtn" title="Dashboard settings" aria-label="Open dashboard settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
         </div>
       </div>
     </header>
+
+    <nav class="subnav-bar" id="subnavBar" aria-label="Section navigation">
+      <div class="subnav-inner">
+        <div class="subnav-links" role="tablist">
+          <a href="#heroSection" class="subnav-link is-active" role="tab" aria-selected="true" data-section="heroSection">Overview</a>
+          <a href="#conditionsSection" class="subnav-link" role="tab" aria-selected="false" data-section="conditionsSection">Conditions</a>
+          <a href="#hourlySection" class="subnav-link" role="tab" aria-selected="false" data-section="hourlySection">Hourly &amp; Trends</a>
+          <a href="#intelligenceSection" class="subnav-link" role="tab" aria-selected="false" data-section="intelligenceSection">Intelligence</a>
+          <a href="#precipSection" class="subnav-link" role="tab" aria-selected="false" data-section="precipSection">Precipitation</a>
+          <a href="#celestialSection" class="subnav-link" role="tab" aria-selected="false" data-section="celestialSection">Sun &amp; Moon</a>
+          <a href="#airQualitySection" class="subnav-link" role="tab" aria-selected="false" data-section="airQualitySection">Air Quality</a>
+          <a href="#mapSection" class="subnav-link" role="tab" aria-selected="false" data-section="mapSection">Map</a>
+          <a href="#compareSection" class="subnav-link" role="tab" aria-selected="false" data-section="compareSection">Compare</a>
+          <a href="#outlookSection" class="subnav-link" role="tab" aria-selected="false" data-section="outlookSection">7-Day Outlook</a>
+        </div>
+        <div class="subnav-actions">
+          <button type="button" class="subnav-cmd-btn" id="openCommandPaletteBtn" title="Quick search (Ctrl+K)" aria-label="Open search palette">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="14" height="14" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Search</span>
+            <kbd>Ctrl K</kbd>
+          </button>
+          <button type="button" class="subnav-settings-btn" id="openSettingsBtn" title="Dashboard settings" aria-label="Open settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Settings</span>
+          </button>
+        </div>
+      </div>
+    </nav>
 
     
     <section class="weather-alerts-container" id="weatherAlertsContainer" aria-label="Weather Advisories" hidden></section>
 
     <main>
       
-      <section class="hero-grid" aria-labelledby="heroHeading">
+      <section class="hero-grid" id="heroSection" aria-labelledby="heroHeading">
         <div class="hero-copy">
           <p class="eyebrow">Atmospheric observations</p>
           <h1 id="heroHeading">Read the sky<br><em>before you go.</em></h1>
@@ -183,6 +218,9 @@
             <p class="location-label">Right now in</p>
             <div class="location-header-row">
               <h2 id="locationName">London</h2>
+              <button type="button" class="location-switcher-chip" id="locationSwitcherChip" title="Quick switch location (Ctrl+K)" aria-label="Switch location">
+                <span>Switch</span> <span class="chip-chevron" aria-hidden="true">&#9662;</span>
+              </button>
               <button type="button" class="fav-star-btn" id="favButton" title="Save location to favorites" aria-label="Toggle favorite location">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -217,7 +255,7 @@
       </section>
 
       
-      <section class="details-section" aria-labelledby="detailsHeading">
+      <section class="details-section" id="conditionsSection" aria-labelledby="detailsHeading">
         <div class="section-heading">
           <div>
             <p class="eyebrow">The useful details</p>
@@ -365,7 +403,7 @@
       </section>
 
       
-      <section class="forecast-section" aria-labelledby="hourlyHeading">
+      <section class="forecast-section" id="hourlySection" aria-labelledby="hourlyHeading">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Next 24 hours</p>
@@ -380,24 +418,31 @@
           </div>
         </div>
         <div class="hourly-list" id="hourlyList" aria-live="polite" tabindex="0"></div>
+        <div class="selected-hour-detail" id="selectedHourDetail" aria-live="polite" hidden></div>
       </section>
 
       
-      <section class="analysis-grid" aria-labelledby="analysisHeading">
+      <section class="analysis-grid" id="intelligenceSection" aria-labelledby="analysisHeading">
         
         <article class="analysis-panel temperature-panel">
           <div class="panel-heading">
             <div>
               <p class="eyebrow" id="analysisHeading">The shape of the day</p>
-              <h2>Temperature &amp; feels like</h2>
+              <h2 id="chartPanelHeading">Temperature &amp; feels like</h2>
             </div>
-            <div class="chart-legend" aria-label="Chart legend">
-              <span class="legend-item actual-temp"><i></i> temperature</span>
-              <span class="legend-item feels-temp"><i></i> feels like</span>
+            <div class="chart-metric-switcher" role="radiogroup" aria-label="Chart data metric">
+              <button type="button" class="chart-metric-pill is-active" data-metric="temperature" role="radio" aria-checked="true">Temp &amp; Feels</button>
+              <button type="button" class="chart-metric-pill" data-metric="precipitation" role="radio" aria-checked="false">Precipitation</button>
+              <button type="button" class="chart-metric-pill" data-metric="wind" role="radio" aria-checked="false">Wind</button>
+              <button type="button" class="chart-metric-pill" data-metric="humidity" role="radio" aria-checked="false">Humidity &amp; Cloud</button>
             </div>
           </div>
+          <div class="chart-legend" id="chartLegend" aria-label="Chart legend">
+            <span class="legend-item actual-temp" id="legendItem1"><i></i> temperature</span>
+            <span class="legend-item feels-temp" id="legendItem2"><i></i> feels like</span>
+          </div>
           <div class="temperature-chart-container">
-            <div class="temperature-chart" id="temperatureChart" role="img" aria-label="Hourly temperature and apparent temperature trendline"></div>
+            <div class="temperature-chart" id="temperatureChart" role="img" aria-label="Hourly meteorological trendline"></div>
             <div class="chart-tooltip" id="chartTooltip" hidden></div>
           </div>
         </article>
@@ -414,6 +459,22 @@
             <div class="insight-tags" id="insightTags" aria-label="Key atmospheric highlights"></div>
           </article>
 
+          <article class="analysis-panel timeline-panel" id="timelinePanel" aria-labelledby="timelineHeading">
+            <div class="timeline-header">
+              <p class="eyebrow" id="timelineHeading">Diurnal timeline</p>
+              <h3>Today's atmospheric checkpoints</h3>
+            </div>
+            <div class="daily-timeline-track" id="dailyTimeline"></div>
+          </article>
+
+          <article class="analysis-panel risk-center-panel" id="riskCenterPanel" aria-labelledby="riskHeading">
+            <div class="risk-center-header">
+              <p class="eyebrow" id="riskHeading">Risk evaluation</p>
+              <h3>Atmospheric risk center</h3>
+            </div>
+            <div class="risk-grid" id="riskCenterGrid"></div>
+          </article>
+
           
           <article class="best-time-panel" id="bestTimeSection" aria-labelledby="bestTimeHeading">
             <div class="best-time-header">
@@ -426,7 +487,7 @@
       </section>
 
       
-      <section class="precipitation-section" aria-labelledby="precipHeading">
+      <section class="precipitation-section" id="precipSection" aria-labelledby="precipHeading">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Hydrological outlook</p>
@@ -447,8 +508,7 @@
         </div>
       </section>
 
-      
-      <section class="sun-moon-section" aria-labelledby="sunMoonHeading">
+      <section class="celestial-section" id="celestialSection" aria-labelledby="celestialHeading">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Celestial cycles</p>
@@ -504,7 +564,7 @@
       </section>
 
       
-      <section class="air-quality-section" aria-labelledby="aqHeading">
+      <section class="air-quality-section" id="airQualitySection" aria-labelledby="aqHeading">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Atmospheric purity</p>
@@ -605,7 +665,7 @@
       </section>
 
       
-      <section class="outlook-section" aria-labelledby="outlookHeading">
+      <section class="outlook-section" id="outlookSection" aria-labelledby="outlookHeading">
         <div class="outlook-title">
           <p class="eyebrow">The next 7 days</p>
           <h2 id="outlookHeading">Weekly outlook</h2>
@@ -630,6 +690,188 @@
   </div>
 
   
+  <div class="cmd-palette-backdrop" id="commandPaletteBackdrop" hidden>
+    <div class="cmd-palette-dialog" id="commandPaletteDialog" role="dialog" aria-modal="true" aria-label="Quick search palette">
+      <div class="cmd-input-wrap">
+        <span class="cmd-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="18" height="18"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <input type="text" class="cmd-input" id="commandPaletteInput" placeholder="Search city, recent places, or actions..." autocomplete="off" spellcheck="false">
+        <button type="button" class="cmd-close-btn" id="closeCommandPaletteBtn" aria-label="Close search palette">&times;</button>
+      </div>
+      <div class="cmd-results-wrap" id="commandPaletteResults" role="listbox">
+        <div class="cmd-quick-actions">
+          <div class="cmd-section-label">Quick actions</div>
+          <button type="button" class="cmd-item" id="cmdCurrentLocationAction" role="option">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="cmd-item-icon" width="16" height="16" aria-hidden="true"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+            <div class="cmd-item-content">
+              <strong>Use my current location</strong>
+              <small>Detect GPS position</small>
+            </div>
+            <span class="cmd-item-badge">GPS</span>
+          </button>
+        </div>
+        <div class="cmd-section-wrap" id="cmdFavoritesSection" hidden>
+          <div class="cmd-section-label">Favorites</div>
+          <div class="cmd-list" id="cmdFavoritesList"></div>
+        </div>
+        <div class="cmd-section-wrap" id="cmdRecentsSection" hidden>
+          <div class="cmd-section-label">Recent searches</div>
+          <div class="cmd-list" id="cmdRecentsList"></div>
+        </div>
+        <div class="cmd-section-wrap" id="cmdSearchResultsSection" hidden>
+          <div class="cmd-section-label">Search results</div>
+          <div class="cmd-list" id="cmdSearchResultsList"></div>
+        </div>
+      </div>
+      <div class="cmd-footer">
+        <span><kbd>&uarr;</kbd> <kbd>&darr;</kbd> Navigate</span>
+        <span><kbd>Enter</kbd> Select</span>
+        <span><kbd>Esc</kbd> Close</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-backdrop" id="settingsBackdrop" hidden></div>
+  <aside class="settings-drawer" id="settingsDrawer" role="dialog" aria-modal="true" aria-labelledby="settingsDrawerTitle" hidden>
+    <div class="drawer-header">
+      <div>
+        <p class="eyebrow">Preferences</p>
+        <h2 id="settingsDrawerTitle">Settings</h2>
+      </div>
+      <button type="button" class="drawer-close-btn" id="closeSettingsBtn" aria-label="Close settings">&times;</button>
+    </div>
+    <div class="drawer-content">
+      <div class="settings-group">
+        <h3 class="settings-group-title">Appearance &amp; Units</h3>
+        <div class="settings-row">
+          <div>
+            <strong>Appearance theme</strong>
+            <small>Select light paper, obsidian dark, or auto</small>
+          </div>
+          <div class="settings-theme-pills" id="settingsThemePills">
+            <button type="button" class="settings-pill" data-theme-choice="light">Light</button>
+            <button type="button" class="settings-pill" data-theme-choice="dark">Dark</button>
+            <button type="button" class="settings-pill" data-theme-choice="system">Auto</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <strong>Temperature unit</strong>
+            <small>Display readings in Celsius or Fahrenheit</small>
+          </div>
+          <div class="settings-unit-pills" id="settingsTempPills">
+            <button type="button" class="settings-pill" data-temp-choice="celsius">&deg;C</button>
+            <button type="button" class="settings-pill" data-temp-choice="fahrenheit">&deg;F</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <strong>Wind speed unit</strong>
+            <small>Display velocity in km/h or mph</small>
+          </div>
+          <div class="settings-unit-pills" id="settingsWindPills">
+            <button type="button" class="settings-pill" data-wind-choice="kmh">km/h</button>
+            <button type="button" class="settings-pill" data-wind-choice="mph">mph</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">Dashboard Customization</h3>
+        <p class="settings-desc">Choose which atmospheric modules appear on your dashboard:</p>
+        <div class="settings-toggle-list" id="dashboardSectionsList">
+          <label class="toggle-item">
+            <span>Air Quality telemetry</span>
+            <input type="checkbox" id="toggleSectionAqi" checked data-section-target="airQualitySection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Hourly forecast &amp; trends</span>
+            <input type="checkbox" id="toggleSectionHourly" checked data-section-target="hourlySection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>7-Day weekly outlook</span>
+            <input type="checkbox" id="toggleSectionOutlook" checked data-section-target="outlookSection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Weather intelligence &amp; timeline</span>
+            <input type="checkbox" id="toggleSectionIntelligence" checked data-section-target="intelligenceSection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Hydrological &amp; rain distribution</span>
+            <input type="checkbox" id="toggleSectionPrecip" checked data-section-target="precipSection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Solar &amp; lunar celestial progression</span>
+            <input type="checkbox" id="toggleSectionCelestial" checked data-section-target="celestialSection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Interactive Leaflet weather map</span>
+            <input type="checkbox" id="toggleSectionMap" checked data-section-target="mapSection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Multi-city comparison</span>
+            <input type="checkbox" id="toggleSectionCompare" checked data-section-target="compareSection">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">Personal Weather Alerts</h3>
+        <p class="settings-desc">Configure local threshold advisories:</p>
+        <div class="settings-row">
+          <div>
+            <strong>Rain probability threshold</strong>
+            <small>Flag advisory when rain chance exceeds</small>
+          </div>
+          <div class="settings-input-wrap">
+            <input type="number" id="alertThresholdRain" min="10" max="100" step="5" value="60" class="settings-num-input">
+            <span>%</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <strong>High temperature threshold</strong>
+            <small>Flag advisory when temperature exceeds</small>
+          </div>
+          <div class="settings-input-wrap">
+            <input type="number" id="alertThresholdTemp" min="20" max="55" step="1" value="38" class="settings-num-input">
+            <span>&deg;C</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <strong>Air Quality (US AQI) threshold</strong>
+            <small>Flag advisory when AQI exceeds</small>
+          </div>
+          <div class="settings-input-wrap">
+            <input type="number" id="alertThresholdAqi" min="50" max="500" step="10" value="100" class="settings-num-input">
+            <span>AQI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">Manage Saved Favorites</h3>
+        <p class="settings-desc">Customize labels or remove saved cities:</p>
+        <div class="settings-favs-list" id="settingsFavsList"></div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button type="button" class="drawer-save-btn" id="saveSettingsBtn">Save &amp; Apply</button>
+    </div>
+  </aside>
+
+  <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="app.js"></script>
 </body>
