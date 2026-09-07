@@ -78,6 +78,31 @@
           <button type="button" class="topbar-settings-btn" id="topbarSettingsBtn" title="Dashboard settings" aria-label="Open dashboard settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
+          <div class="account-control" id="accountControl">
+            <button type="button" class="topbar-auth-btn" id="openAuthModalBtn" title="Sign in to your Northstar account">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="14" height="14" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <span>Sign in</span>
+            </button>
+            <div class="account-menu-wrap" id="accountMenuWrap" hidden>
+              <button type="button" class="account-badge-btn" id="accountMenuBtn" aria-expanded="false" aria-haspopup="true">
+                <span class="account-avatar" id="accountAvatar">U</span>
+                <span class="account-name" id="accountName">User</span>
+                <span class="account-caret" aria-hidden="true">&#9662;</span>
+              </button>
+              <div class="account-dropdown" id="accountDropdown" hidden>
+                <div class="account-dropdown-header">
+                  <strong id="dropdownUserName">User Name</strong>
+                  <span id="dropdownUserEmail">user@example.com</span>
+                  <span class="cloud-sync-badge"><span class="sync-dot"></span> Cloud sync active</span>
+                </div>
+                <div class="account-dropdown-actions">
+                  <button type="button" class="dropdown-item" id="accountOpenSettings">Settings &amp; Units</button>
+                  <button type="button" class="dropdown-item" id="accountOpenFavorites">Saved Locations</button>
+                  <button type="button" class="dropdown-item dropdown-danger" id="accountSignOutBtn">Sign out</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -424,11 +449,11 @@
       
       <section class="analysis-grid" id="intelligenceSection" aria-labelledby="analysisHeading">
         
-        <article class="analysis-panel temperature-panel">
+        <article class="analysis-panel today-glance-panel" id="todayGlancePanel">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow" id="analysisHeading">The shape of the day</p>
-              <h2 id="chartPanelHeading">Temperature &amp; feels like</h2>
+              <p class="eyebrow" id="analysisHeading">Diurnal progression</p>
+              <h2 id="chartPanelHeading">Today at a glance</h2>
             </div>
             <div class="chart-metric-switcher" role="radiogroup" aria-label="Chart data metric">
               <button type="button" class="chart-metric-pill is-active" data-metric="temperature" role="radio" aria-checked="true">Temp &amp; Feels</button>
@@ -437,13 +462,90 @@
               <button type="button" class="chart-metric-pill" data-metric="humidity" role="radio" aria-checked="false">Humidity &amp; Cloud</button>
             </div>
           </div>
-          <div class="chart-legend" id="chartLegend" aria-label="Chart legend">
-            <span class="legend-item actual-temp" id="legendItem1"><i></i> temperature</span>
-            <span class="legend-item feels-temp" id="legendItem2"><i></i> feels like</span>
+
+          <div class="diurnal-grid" id="diurnalGrid">
+            <div class="diurnal-card">
+              <div class="diurnal-header">
+                <span class="diurnal-period">Morning</span>
+                <span class="diurnal-time">06:00 &ndash; 12:00</span>
+              </div>
+              <div class="diurnal-temp-row">
+                <strong class="diurnal-temp" id="diurnalMorningTemp">--&deg;</strong>
+                <span class="diurnal-icon" id="diurnalMorningIcon" aria-hidden="true">&#9728;</span>
+              </div>
+              <div class="diurnal-cond" id="diurnalMorningCond">--</div>
+              <div class="diurnal-badge" id="diurnalMorningBadge">--</div>
+            </div>
+
+            <div class="diurnal-card is-highlight">
+              <div class="diurnal-header">
+                <span class="diurnal-period">Afternoon</span>
+                <span class="diurnal-time">12:00 &ndash; 18:00</span>
+              </div>
+              <div class="diurnal-temp-row">
+                <strong class="diurnal-temp" id="diurnalAfternoonTemp">--&deg;</strong>
+                <span class="diurnal-icon" id="diurnalAfternoonIcon" aria-hidden="true">&#9728;</span>
+              </div>
+              <div class="diurnal-cond" id="diurnalAfternoonCond">--</div>
+              <div class="diurnal-badge" id="diurnalAfternoonBadge">--</div>
+            </div>
+
+            <div class="diurnal-card">
+              <div class="diurnal-header">
+                <span class="diurnal-period">Evening</span>
+                <span class="diurnal-time">18:00 &ndash; 22:00</span>
+              </div>
+              <div class="diurnal-temp-row">
+                <strong class="diurnal-temp" id="diurnalEveningTemp">--&deg;</strong>
+                <span class="diurnal-icon" id="diurnalEveningIcon" aria-hidden="true">&#9729;</span>
+              </div>
+              <div class="diurnal-cond" id="diurnalEveningCond">--</div>
+              <div class="diurnal-badge" id="diurnalEveningBadge">--</div>
+            </div>
+
+            <div class="diurnal-card">
+              <div class="diurnal-header">
+                <span class="diurnal-period">Overnight</span>
+                <span class="diurnal-time">22:00 &ndash; 06:00</span>
+              </div>
+              <div class="diurnal-temp-row">
+                <strong class="diurnal-temp" id="diurnalNightTemp">--&deg;</strong>
+                <span class="diurnal-icon" id="diurnalNightIcon" aria-hidden="true">&#9790;</span>
+              </div>
+              <div class="diurnal-cond" id="diurnalNightCond">--</div>
+              <div class="diurnal-badge" id="diurnalNightBadge">--</div>
+            </div>
           </div>
-          <div class="temperature-chart-container">
-            <div class="temperature-chart" id="temperatureChart" role="img" aria-label="Hourly meteorological trendline"></div>
-            <div class="chart-tooltip" id="chartTooltip" hidden></div>
+
+          <div class="glance-summary-strip" id="glanceSummaryStrip">
+            <div class="summary-metric">
+              <span class="metric-lbl">Rain probability window</span>
+              <strong class="metric-val" id="glanceRainWindow">Calculating...</strong>
+            </div>
+            <div class="summary-divider" aria-hidden="true"></div>
+            <div class="summary-metric">
+              <span class="metric-lbl">Solar Noon &amp; UV Peak</span>
+              <strong class="metric-val" id="glanceUvPeak">--</strong>
+            </div>
+            <div class="summary-divider" aria-hidden="true"></div>
+            <div class="summary-metric">
+              <span class="metric-lbl">Diurnal Thermal Span</span>
+              <strong class="metric-val" id="glanceTempSpan">--</strong>
+            </div>
+          </div>
+
+          <div class="compact-sparkline-wrap">
+            <div class="sparkline-header">
+              <span class="sparkline-title" id="sparklineTitle">24-hour diurnal trajectory</span>
+              <div class="chart-legend" id="chartLegend" aria-label="Chart legend">
+                <span class="legend-item actual-temp" id="legendItem1"><i></i> temperature</span>
+                <span class="legend-item feels-temp" id="legendItem2"><i></i> feels like</span>
+              </div>
+            </div>
+            <div class="temperature-chart-container compact-chart">
+              <div class="temperature-chart" id="temperatureChart" role="img" aria-label="Hourly meteorological trendline"></div>
+              <div class="chart-tooltip" id="chartTooltip" hidden></div>
+            </div>
           </div>
         </article>
 
@@ -869,6 +971,58 @@
       <button type="button" class="drawer-save-btn" id="saveSettingsBtn">Save &amp; Apply</button>
     </div>
   </aside>
+
+  <div class="modal-backdrop" id="authModalBackdrop" hidden>
+    <div class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+      <div class="auth-modal-header">
+        <div class="auth-tabs" role="tablist">
+          <button type="button" class="auth-tab is-active" id="authTabLogin" role="tab" aria-selected="true">Sign in</button>
+          <button type="button" class="auth-tab" id="authTabRegister" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <button type="button" class="modal-close-btn" id="closeAuthModalBtn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="auth-modal-body">
+        <div class="auth-error-banner" id="authErrorBanner" hidden></div>
+        <form class="auth-form" id="authForm" novalidate>
+          <div class="form-group" id="authNameGroup" hidden>
+            <label for="authNameInput">Full name</label>
+            <input type="text" id="authNameInput" class="auth-input" placeholder="e.g. Alex North" autocomplete="name" maxlength="60">
+          </div>
+          <div class="form-group">
+            <label for="authEmailInput">Email address</label>
+            <input type="email" id="authEmailInput" class="auth-input" placeholder="you@example.com" autocomplete="email" required>
+          </div>
+          <div class="form-group">
+            <label for="authPasswordInput">Password</label>
+            <input type="password" id="authPasswordInput" class="auth-input" placeholder="At least 8 characters" autocomplete="current-password" required minlength="8">
+          </div>
+          <button type="submit" class="auth-submit-btn" id="authSubmitBtn">
+            <span class="auth-btn-text">Sign in to Northstar</span>
+            <span class="auth-btn-spinner" aria-hidden="true" hidden></span>
+          </button>
+        </form>
+        <div class="auth-footnote">
+          <span>Guest mode is always available. Accounts enable cloud sync for favorites, alerts, and settings.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="syncModalBackdrop" hidden>
+    <div class="sync-modal" id="syncModal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+      <div class="sync-modal-header">
+        <h3 id="syncModalTitle">Sync Local Locations</h3>
+        <button type="button" class="modal-close-btn" id="closeSyncModalBtn" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="sync-modal-body">
+        <p id="syncModalText">You have saved locations in your browser. Would you like to sync them with your Northstar cloud account?</p>
+        <div class="sync-modal-actions">
+          <button type="button" class="ns-btn ns-btn-primary" id="confirmSyncBtn">Sync to Cloud</button>
+          <button type="button" class="ns-btn ns-btn-ghost" id="dismissSyncBtn">Keep Local Only</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
 

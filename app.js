@@ -91,7 +91,32 @@ const elements = {
   alertThresholdAqi: document.querySelector('#alertThresholdAqi'),
   settingsFavsList: document.querySelector('#settingsFavsList'),
   toastContainer: document.querySelector('#toastContainer'),
-  
+  openAuthModalBtn: document.querySelector('#openAuthModalBtn'),
+  accountMenuWrap: document.querySelector('#accountMenuWrap'),
+  accountMenuBtn: document.querySelector('#accountMenuBtn'),
+  accountAvatar: document.querySelector('#accountAvatar'),
+  accountName: document.querySelector('#accountName'),
+  accountDropdown: document.querySelector('#accountDropdown'),
+  dropdownUserName: document.querySelector('#dropdownUserName'),
+  dropdownUserEmail: document.querySelector('#dropdownUserEmail'),
+  accountOpenSettings: document.querySelector('#accountOpenSettings'),
+  accountOpenFavorites: document.querySelector('#accountOpenFavorites'),
+  accountSignOutBtn: document.querySelector('#accountSignOutBtn'),
+  authModalBackdrop: document.querySelector('#authModalBackdrop'),
+  closeAuthModalBtn: document.querySelector('#closeAuthModalBtn'),
+  authTabLogin: document.querySelector('#authTabLogin'),
+  authTabRegister: document.querySelector('#authTabRegister'),
+  authForm: document.querySelector('#authForm'),
+  authNameGroup: document.querySelector('#authNameGroup'),
+  authNameInput: document.querySelector('#authNameInput'),
+  authEmailInput: document.querySelector('#authEmailInput'),
+  authPasswordInput: document.querySelector('#authPasswordInput'),
+  authSubmitBtn: document.querySelector('#authSubmitBtn'),
+  authErrorBanner: document.querySelector('#authErrorBanner'),
+  syncModalBackdrop: document.querySelector('#syncModalBackdrop'),
+  closeSyncModalBtn: document.querySelector('#closeSyncModalBtn'),
+  confirmSyncBtn: document.querySelector('#confirmSyncBtn'),
+  dismissSyncBtn: document.querySelector('#dismissSyncBtn'),
   updatedAt: document.querySelector('#updatedAt'),
   weatherAlertsContainer: document.querySelector('#weatherAlertsContainer'),
 
@@ -716,13 +741,40 @@ async function getForecast(place, { forceRefresh = false, signal = null } = {}) 
       });
 
       const fetchOptions = signal ? { signal } : {};
-      const forecastResponse = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, fetchOptions);
+      let forecastData = null;
+      let backendAirQuality = null;
 
-      if (!forecastResponse.ok) {
-        throw new Error('Weather forecast service is temporarily unavailable.');
+      try {
+        const backendRes = await fetch(`/api/v1/weather?lat=${place.latitude}&lon=${place.longitude}`, {
+          ...fetchOptions,
+          credentials: 'include'
+        });
+        if (backendRes.ok) {
+          const resJson = await backendRes.json();
+          if (resJson && resJson.success && resJson.data) {
+            forecastData = {
+              latitude: resJson.data.latitude,
+              longitude: resJson.data.longitude,
+              timezone: resJson.data.timezone,
+              elevation: resJson.data.elevation,
+              current: resJson.data.current,
+              hourly: resJson.data.hourly,
+              daily: resJson.data.daily
+            };
+            if (resJson.data.airQuality) {
+              backendAirQuality = { current: resJson.data.airQuality };
+            }
+          }
+        }
+      } catch {}
+
+      if (!forecastData) {
+        const forecastResponse = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, fetchOptions);
+        if (!forecastResponse.ok) {
+          throw new Error('Weather forecast service is temporarily unavailable.');
+        }
+        forecastData = await forecastResponse.json();
       }
-
-      const forecastData = await forecastResponse.json();
 
       
       const existing = getWeatherFromCache(coordKey, 24 * 60 * 60 * 1000);
@@ -801,7 +853,13 @@ async function reverseGeocode(latitude, longitude) {
   };
 }
 
+let currentUser = null;
+let cloudFavorites = [];
+
 function getFavorites() {
+  if (currentUser && cloudFavorites && cloudFavorites.length) {
+    return cloudFavorites;
+  }
   return storage.get('northstar_favorites', []);
 }
 
@@ -820,9 +878,9 @@ function updateFavoriteButton() {
   elements.favButton.title = isFav ? 'Remove from favorites' : 'Save location to favorites';
 }
 
-function toggleFavorite() {
+async function toggleFavorite() {
   if (!currentPlace) return;
-  let favs = getFavorites();
+  let favs = getFavorites().slice();
   const idx = favs.findIndex(
     (f) => Math.abs(f.latitude - currentPlace.latitude) < 0.02 && Math.abs(f.longitude - currentPlace.longitude) < 0.02
   );
@@ -830,21 +888,54 @@ function toggleFavorite() {
   if (idx >= 0) {
     const removed = favs.splice(idx, 1)[0];
     showToast((removed.customName || removed.name) + ' removed from favorites', 'info');
+    if (currentUser && removed._id) {
+      try {
+        await fetch(`/api/v1/favorites/${removed._id}`, { method: 'DELETE', credentials: 'include' });
+      } catch {}
+    }
   } else {
-    favs.push({
+    const newFav = {
       id: 'fav_' + Date.now(),
       name: currentPlace.name,
       region: currentPlace.region || '',
+      country: currentPlace.country || '',
       latitude: currentPlace.latitude,
       longitude: currentPlace.longitude,
       timezone: currentPlace.timezone || 'auto',
       customName: '',
       order: favs.length,
       createdAt: Date.now()
-    });
+    };
+    favs.push(newFav);
     showToast(currentPlace.name + ' saved to favorites', 'success');
+
+    if (currentUser) {
+      try {
+        const res = await fetch('/api/v1/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: currentPlace.name,
+            region: currentPlace.region || '',
+            country: currentPlace.country || '',
+            latitude: currentPlace.latitude,
+            longitude: currentPlace.longitude
+          })
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.success && json.data) {
+            newFav._id = json.data._id;
+          }
+        }
+      } catch {}
+    }
   }
 
+  if (currentUser) {
+    cloudFavorites = favs;
+  }
   storage.set('northstar_favorites', favs);
   updateFavoriteButton();
   renderFavoritesTray();
@@ -1550,6 +1641,7 @@ function render(place, payload, options = false) {
   currentHourlyData = hourly;
   currentHourlyStart = start;
   renderInteractiveChart(hourly, start, currentChartMetric);
+  renderTodayAtAGlance(hourly, daily);
 
   
   const rainPhrase =
@@ -1741,6 +1833,105 @@ function renderHourly(hourly, currentTime) {
 
   elements.hourlyNote.textContent = `${hours.length} hours · click hour to inspect`;
   return { start, hours };
+}
+
+function renderTodayAtAGlance(hourly, daily) {
+  if (!hourly || !hourly.time || !hourly.time.length) return;
+
+  const getHourIndex = (targetHour) => {
+    for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
+      const h = new Date(hourly.time[i]).getHours();
+      if (h === targetHour) return i;
+    }
+    return Math.min(targetHour, hourly.time.length - 1);
+  };
+
+  const morningIdx = getHourIndex(9);
+  const afternoonIdx = getHourIndex(15);
+  const eveningIdx = getHourIndex(20);
+  const nightIdx = getHourIndex(2);
+
+  const formatPeriod = (idx, isDay) => {
+    const temp = hourly.temperature_2m?.[idx];
+    const code = hourly.weather_code?.[idx] || 0;
+    const feels = hourly.apparent_temperature?.[idx];
+    const pop = hourly.precipitation_probability?.[idx] || 0;
+    const [desc, type] = getWeatherLabel(code);
+    const tempStr = temp != null ? Math.round(convertTemperature(temp)) + '°' : '--°';
+    const feelsStr = feels != null ? 'Feels ' + Math.round(convertTemperature(feels)) + '°' : '';
+    const icon = getWeatherIconSvg(type, isDay);
+    return { tempStr, desc, feelsStr, pop, icon };
+  };
+
+  const m = formatPeriod(morningIdx, true);
+  const a = formatPeriod(afternoonIdx, true);
+  const e = formatPeriod(eveningIdx, false);
+  const n = formatPeriod(nightIdx, false);
+
+  const setEl = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  const setHtml = (id, html) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  };
+
+  setEl('diurnalMorningTemp', m.tempStr);
+  setEl('diurnalMorningCond', m.desc);
+  setEl('diurnalMorningBadge', m.pop > 20 ? m.pop + '% rain' : m.feelsStr || 'Comfortable');
+  setHtml('diurnalMorningIcon', m.icon);
+
+  setEl('diurnalAfternoonTemp', a.tempStr);
+  setEl('diurnalAfternoonCond', a.desc);
+  setEl('diurnalAfternoonBadge', a.pop > 20 ? a.pop + '% rain' : a.feelsStr || 'Warm');
+  setHtml('diurnalAfternoonIcon', a.icon);
+
+  setEl('diurnalEveningTemp', e.tempStr);
+  setEl('diurnalEveningCond', e.desc);
+  setEl('diurnalEveningBadge', e.pop > 20 ? e.pop + '% rain' : e.feelsStr || 'Cooling');
+  setHtml('diurnalEveningIcon', e.icon);
+
+  setEl('diurnalNightTemp', n.tempStr);
+  setEl('diurnalNightCond', n.desc);
+  setEl('diurnalNightBadge', n.pop > 20 ? n.pop + '% rain' : n.feelsStr || 'Calm night');
+  setHtml('diurnalNightIcon', n.icon);
+
+  let rainMax = 0;
+  let rainStartHour = -1;
+  let rainEndHour = -1;
+  for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
+    const p = hourly.precipitation_probability?.[i] || 0;
+    if (p > rainMax) rainMax = p;
+    if (p >= 30) {
+      const h = new Date(hourly.time[i]).getHours();
+      if (rainStartHour === -1) rainStartHour = h;
+      rainEndHour = h;
+    }
+  }
+
+  let rainWindowText = 'Low risk (< 20%)';
+  if (rainMax >= 30 && rainStartHour !== -1) {
+    const fmtH = (h) => {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const hr = h % 12 || 12;
+      return `${hr} ${period}`;
+    };
+    rainWindowText = `${rainMax}% peak (${fmtH(rainStartHour)} – ${fmtH(rainEndHour + 1)})`;
+  }
+  setEl('glanceRainWindow', rainWindowText);
+
+  const uvMax = daily?.uv_index_max?.[0];
+  const uvText = uvMax != null ? `Peak ${uvMax.toFixed(1)} around midday` : 'Minimal index';
+  setEl('glanceUvPeak', uvText);
+
+  const highT = daily?.temperature_2m_max?.[0];
+  const lowT = daily?.temperature_2m_min?.[0];
+  if (highT != null && lowT != null) {
+    setEl('glanceTempSpan', `High ${Math.round(convertTemperature(highT))}° · Low ${Math.round(convertTemperature(lowT))}°`);
+  } else {
+    setEl('glanceTempSpan', 'Moderate diurnal range');
+  }
 }
 
 function renderInteractiveChart(hourly, start, metric = currentChartMetric) {
@@ -2902,6 +3093,9 @@ function setupCommandPalette() {
     } else if (e.key === 'Escape') {
       closeCommandPalette();
       closeSettingsDrawer();
+      closeAuthModal();
+      if (elements.syncModalBackdrop) elements.syncModalBackdrop.hidden = true;
+      if (elements.accountDropdown) elements.accountDropdown.hidden = true;
     }
   });
 }
@@ -3093,6 +3287,272 @@ document.addEventListener('click', (e) => {
   }
 });
 
+let authMode = 'login';
+
+async function fetchCloudFavorites() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch('/api/v1/favorites', { credentials: 'include' });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.data)) {
+        cloudFavorites = json.data;
+        updateFavoriteButton();
+        renderFavoritesTray();
+      }
+    }
+  } catch {}
+}
+
+async function checkSession() {
+  try {
+    const res = await fetch('/api/v1/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && data.data && data.data.user) {
+        currentUser = data.data.user;
+        updateUserUI();
+        await fetchCloudFavorites();
+        checkLocalMigration();
+        return;
+      }
+    }
+  } catch {}
+  currentUser = null;
+  updateUserUI();
+}
+
+function updateUserUI() {
+  if (currentUser) {
+    if (elements.openAuthModalBtn) elements.openAuthModalBtn.hidden = true;
+    if (elements.accountMenuWrap) elements.accountMenuWrap.hidden = false;
+    if (elements.accountAvatar) elements.accountAvatar.textContent = (currentUser.name || 'U')[0].toUpperCase();
+    if (elements.accountName) elements.accountName.textContent = (currentUser.name || 'User').split(' ')[0];
+    if (elements.dropdownUserName) elements.dropdownUserName.textContent = currentUser.name;
+    if (elements.dropdownUserEmail) elements.dropdownUserEmail.textContent = currentUser.email;
+  } else {
+    if (elements.openAuthModalBtn) elements.openAuthModalBtn.hidden = false;
+    if (elements.accountMenuWrap) elements.accountMenuWrap.hidden = true;
+    if (elements.accountDropdown) elements.accountDropdown.hidden = true;
+  }
+}
+
+function checkLocalMigration() {
+  if (!currentUser) return;
+  if (localStorage.getItem('northstar_migration_dismissed') === 'true') return;
+  const localFavs = storage.get('northstar_favorites', []);
+  if (!localFavs || !localFavs.length) return;
+  if (elements.syncModalBackdrop) elements.syncModalBackdrop.hidden = false;
+}
+
+function openAuthModal(mode = 'login') {
+  authMode = mode;
+  if (elements.authErrorBanner) elements.authErrorBanner.hidden = true;
+  if (elements.authTabLogin) {
+    elements.authTabLogin.classList.toggle('is-active', authMode === 'login');
+    elements.authTabLogin.setAttribute('aria-selected', authMode === 'login' ? 'true' : 'false');
+  }
+  if (elements.authTabRegister) {
+    elements.authTabRegister.classList.toggle('is-active', authMode === 'register');
+    elements.authTabRegister.setAttribute('aria-selected', authMode === 'register' ? 'true' : 'false');
+  }
+  if (elements.authNameGroup) {
+    elements.authNameGroup.hidden = authMode !== 'register';
+  }
+  if (elements.authSubmitBtn) {
+    const btnText = elements.authSubmitBtn.querySelector('.auth-btn-text');
+    if (btnText) {
+      btnText.textContent = authMode === 'register' ? 'Create Northstar account' : 'Sign in to Northstar';
+    }
+  }
+  if (elements.authModalBackdrop) elements.authModalBackdrop.hidden = false;
+  if (elements.authEmailInput) elements.authEmailInput.focus();
+}
+
+function closeAuthModal() {
+  if (elements.authModalBackdrop) elements.authModalBackdrop.hidden = true;
+  if (elements.authErrorBanner) elements.authErrorBanner.hidden = true;
+  if (elements.authForm) elements.authForm.reset();
+}
+
+function setupAuth() {
+  if (elements.openAuthModalBtn) {
+    elements.openAuthModalBtn.addEventListener('click', () => openAuthModal('login'));
+  }
+  if (elements.closeAuthModalBtn) {
+    elements.closeAuthModalBtn.addEventListener('click', closeAuthModal);
+  }
+  if (elements.authModalBackdrop) {
+    elements.authModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === elements.authModalBackdrop) closeAuthModal();
+    });
+  }
+
+  if (elements.authTabLogin) {
+    elements.authTabLogin.addEventListener('click', () => openAuthModal('login'));
+  }
+  if (elements.authTabRegister) {
+    elements.authTabRegister.addEventListener('click', () => openAuthModal('register'));
+  }
+
+  if (elements.authForm) {
+    elements.authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (elements.authErrorBanner) elements.authErrorBanner.hidden = true;
+      const email = elements.authEmailInput ? elements.authEmailInput.value.trim() : '';
+      const password = elements.authPasswordInput ? elements.authPasswordInput.value : '';
+      const name = elements.authNameInput ? elements.authNameInput.value.trim() : '';
+
+      if (!email || !password) {
+        if (elements.authErrorBanner) {
+          elements.authErrorBanner.textContent = 'Please provide both email and password';
+          elements.authErrorBanner.hidden = false;
+        }
+        return;
+      }
+
+      if (authMode === 'register' && name.length < 2) {
+        if (elements.authErrorBanner) {
+          elements.authErrorBanner.textContent = 'Please enter your full name (minimum 2 characters)';
+          elements.authErrorBanner.hidden = false;
+        }
+        return;
+      }
+
+      const submitText = elements.authSubmitBtn ? elements.authSubmitBtn.querySelector('.auth-btn-text') : null;
+      const origText = submitText ? submitText.textContent : '';
+      if (submitText) submitText.textContent = 'Connecting...';
+      if (elements.authSubmitBtn) elements.authSubmitBtn.disabled = true;
+
+      try {
+        const endpoint = authMode === 'register' ? '/api/v1/auth/register' : '/api/v1/auth/login';
+        const payload = authMode === 'register' ? { name, email, password } : { email, password };
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          if (elements.authErrorBanner) {
+            elements.authErrorBanner.textContent = json.error || 'Authentication failed. Please check your credentials.';
+            elements.authErrorBanner.hidden = false;
+          }
+          return;
+        }
+
+        currentUser = json.data.user;
+        updateUserUI();
+        closeAuthModal();
+        showToast(authMode === 'register' ? 'Account created successfully!' : `Welcome back, ${currentUser.name.split(' ')[0]}`, 'success');
+        await fetchCloudFavorites();
+        checkLocalMigration();
+      } catch (err) {
+        if (elements.authErrorBanner) {
+          elements.authErrorBanner.textContent = 'Unable to connect to server. Please try again later.';
+          elements.authErrorBanner.hidden = false;
+        }
+      } finally {
+        if (submitText) submitText.textContent = origText;
+        if (elements.authSubmitBtn) elements.authSubmitBtn.disabled = false;
+      }
+    });
+  }
+
+  if (elements.accountMenuBtn) {
+    elements.accountMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = elements.accountDropdown ? elements.accountDropdown.hidden : true;
+      if (elements.accountDropdown) elements.accountDropdown.hidden = !isHidden;
+      elements.accountMenuBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    if (elements.accountDropdown && !elements.accountDropdown.hidden) {
+      if (!e.target.closest('#accountControl')) {
+        elements.accountDropdown.hidden = true;
+        if (elements.accountMenuBtn) elements.accountMenuBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
+  });
+
+  if (elements.accountSignOutBtn) {
+    elements.accountSignOutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch {}
+      currentUser = null;
+      cloudFavorites = [];
+      updateUserUI();
+      updateFavoriteButton();
+      renderFavoritesTray();
+      showToast('Signed out of Northstar', 'info');
+    });
+  }
+
+  if (elements.accountOpenSettings) {
+    elements.accountOpenSettings.addEventListener('click', () => {
+      if (elements.accountDropdown) elements.accountDropdown.hidden = true;
+      if (elements.settingsBackdrop) elements.settingsBackdrop.hidden = false;
+    });
+  }
+
+  if (elements.accountOpenFavorites) {
+    elements.accountOpenFavorites.addEventListener('click', () => {
+      if (elements.accountDropdown) elements.accountDropdown.hidden = true;
+      const favSec = document.querySelector('#favoritesSection');
+      if (favSec) {
+        favSec.hidden = false;
+        favSec.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  }
+
+  if (elements.confirmSyncBtn) {
+    elements.confirmSyncBtn.addEventListener('click', async () => {
+      const localFavs = storage.get('northstar_favorites', []);
+      if (localFavs && localFavs.length) {
+        try {
+          const res = await fetch('/api/v1/favorites/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ favorites: localFavs })
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.success) {
+              cloudFavorites = json.data;
+              showToast(`Synced ${json.syncedCount || localFavs.length} locations to cloud!`, 'success');
+              renderFavoritesTray();
+            }
+          }
+        } catch {}
+      }
+      localStorage.setItem('northstar_migration_dismissed', 'true');
+      if (elements.syncModalBackdrop) elements.syncModalBackdrop.hidden = true;
+    });
+  }
+
+  if (elements.dismissSyncBtn) {
+    elements.dismissSyncBtn.addEventListener('click', () => {
+      localStorage.setItem('northstar_migration_dismissed', 'true');
+      if (elements.syncModalBackdrop) elements.syncModalBackdrop.hidden = true;
+    });
+  }
+
+  if (elements.closeSyncModalBtn) {
+    elements.closeSyncModalBtn.addEventListener('click', () => {
+      if (elements.syncModalBackdrop) elements.syncModalBackdrop.hidden = true;
+    });
+  }
+
+  checkSession();
+}
+
 function boot() {
   applyTheme(currentTheme);
   applyDashboardSectionVisibility();
@@ -3100,6 +3560,7 @@ function boot() {
   setupMultiMetricChartSwitcher();
   setupCommandPalette();
   setupSettingsDrawer();
+  setupAuth();
 
 
   
