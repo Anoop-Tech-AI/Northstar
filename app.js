@@ -147,6 +147,8 @@ const elements = {
   temperature: document.querySelector('#temperature'),
   temperatureUnit: document.querySelector('#temperatureUnit'),
   feelsLike: document.querySelector('#feelsLike'),
+  heroRange: document.querySelector('#heroRange'),
+  heroRain: document.querySelector('#heroRain'),
   daylight: document.querySelector('#daylight'),
   coordinates: document.querySelector('#coordinates'),
 
@@ -220,44 +222,63 @@ const elements = {
 
   
   aqCategory: document.querySelector('#aqCategory'),
+  aqAqiNumber: document.querySelector('#aqAqiNumber'),
+  aqCategoryTitle: document.querySelector('#aqCategoryTitle'),
+  aqDescription: document.querySelector('#aqDescription'),
   airQualityGrid: document.querySelector('#airQualityGrid'),
   airQualityEmpty: document.querySelector('#airQualityEmpty'),
 
-  
+  whatMattersSection: document.querySelector('#whatMattersSection'),
+  mattersRainVal: document.querySelector('#mattersRainVal'),
+  mattersRainSub: document.querySelector('#mattersRainSub'),
+  mattersHeatVal: document.querySelector('#mattersHeatVal'),
+  mattersHeatSub: document.querySelector('#mattersHeatSub'),
+  mattersUvVal: document.querySelector('#mattersUvVal'),
+  mattersUvSub: document.querySelector('#mattersUvSub'),
+  mattersAirVal: document.querySelector('#mattersAirVal'),
+  mattersAirSub: document.querySelector('#mattersAirSub'),
+
+  todaySummarySection: document.querySelector('#todaySummarySection'),
+  todaySummaryHeading: document.querySelector('#todaySummaryHeading'),
+  todaySummaryText: document.querySelector('#todaySummaryText'),
+  todaySummaryAction: document.querySelector('#todaySummaryAction'),
+
+  advancedDetailsSection: document.querySelector('#advancedDetailsSection'),
+  visibilityStatus: document.querySelector('#visibilityStatus'),
+
   mapSection: document.querySelector('#mapSection'),
   weatherMap: document.querySelector('#weatherMap'),
   mapCoordDisplay: document.querySelector('#mapCoordDisplay'),
   mapHint: document.querySelector('#mapHint'),
 
-  
+  forecast: document.querySelector('#forecastList'),
+
   compareSection: document.querySelector('#compareSection'),
   compareSlot1Name: document.querySelector('#compareSlot1Name'),
   compareSlot1Region: document.querySelector('#compareSlot1Region'),
   compareSlot2Card: document.querySelector('#compareSlot2Card'),
+  compareSlot2Clear: document.querySelector('#compareSlot2Clear'),
   compareSlot2SearchWrap: document.querySelector('#compareSlot2SearchWrap'),
   compareSlot2Input: document.querySelector('#compareSlot2Input'),
   compareSlot2Suggestions: document.querySelector('#compareSlot2Suggestions'),
   compareSlot2Info: document.querySelector('#compareSlot2Info'),
   compareSlot2Name: document.querySelector('#compareSlot2Name'),
   compareSlot2Region: document.querySelector('#compareSlot2Region'),
-  compareSlot2Clear: document.querySelector('#compareSlot2Clear'),
   compareSlot3Card: document.querySelector('#compareSlot3Card'),
+  compareSlot3Clear: document.querySelector('#compareSlot3Clear'),
   compareSlot3SearchWrap: document.querySelector('#compareSlot3SearchWrap'),
   compareSlot3Input: document.querySelector('#compareSlot3Input'),
   compareSlot3Suggestions: document.querySelector('#compareSlot3Suggestions'),
   compareSlot3Info: document.querySelector('#compareSlot3Info'),
   compareSlot3Name: document.querySelector('#compareSlot3Name'),
   compareSlot3Region: document.querySelector('#compareSlot3Region'),
-  compareSlot3Clear: document.querySelector('#compareSlot3Clear'),
+  compareTableContainer: document.querySelector('#compareTableContainer'),
   compareEmptyPrompt: document.querySelector('#compareEmptyPrompt'),
   compareTable: document.querySelector('#compareTable'),
-  compareTableBody: document.querySelector('#compareTableBody'),
   thCity1: document.querySelector('#thCity1'),
   thCity2: document.querySelector('#thCity2'),
   thCity3: document.querySelector('#thCity3'),
-
-  
-  forecast: document.querySelector('#forecastList')
+  compareTableBody: document.querySelector('#compareTableBody')
 };
 
 let currentPlace = null;
@@ -273,12 +294,13 @@ let commandPaletteSelectedIndex = -1;
 let commandSearchTimer = null;
 
 const defaultDashboardSections = {
-  airQualitySection: true,
+  whatMattersSection: true,
   hourlySection: true,
   outlookSection: true,
-  intelligenceSection: true,
-  precipSection: true,
+  todaySummarySection: true,
   celestialSection: true,
+  airQualitySection: true,
+  advancedDetailsSection: true,
   mapSection: true,
   compareSection: true
 };
@@ -1341,10 +1363,11 @@ function initMap(latitude, longitude, name, temp, condition) {
 }
 
 function updateComparisonSlot1(place, data) {
+  if (!place || !data) return;
   comparisonSlots.slot1 = { place, data };
-  elements.compareSlot1Name.textContent = place.name;
-  elements.compareSlot1Region.textContent = place.region || '';
-  elements.thCity1.textContent = place.name;
+  if (elements.compareSlot1Name) elements.compareSlot1Name.textContent = place.name;
+  if (elements.compareSlot1Region) elements.compareSlot1Region.textContent = place.region || '';
+  if (elements.thCity1) elements.thCity1.textContent = place.name;
   renderComparisonTable();
 }
 
@@ -1364,18 +1387,20 @@ async function setComparisonSlot(slotNum, city) {
     if (isSlot2) comparisonSlots.slot2 = slotData;
     else comparisonSlots.slot3 = slotData;
 
-    nameEl.textContent = city.name;
-    regionEl.textContent = city.region || '';
-    thEl.textContent = city.name;
+    if (nameEl) nameEl.textContent = city.name;
+    if (regionEl) regionEl.textContent = city.region || '';
+    if (thEl) thEl.textContent = city.name;
 
-    searchWrapEl.hidden = true;
-    infoEl.hidden = false;
-    clearEl.hidden = false;
+    if (searchWrapEl) searchWrapEl.hidden = true;
+    if (infoEl) infoEl.hidden = false;
+    if (clearEl) clearEl.hidden = false;
 
     renderComparisonTable();
   } catch {
-    elements.status.className = 'form-status is-error';
-    elements.status.textContent = `Could not load weather for comparison city “${city.name}”.`;
+    if (elements.status) {
+      elements.status.className = 'form-status is-error';
+      elements.status.textContent = `Could not load weather for comparison city “${city.name}”.`;
+    }
   }
 }
 
@@ -1390,16 +1415,17 @@ function clearComparisonSlot(slotNum) {
   const inputEl = isSlot2 ? elements.compareSlot2Input : elements.compareSlot3Input;
   const thEl = isSlot2 ? elements.thCity2 : elements.thCity3;
 
-  infoEl.hidden = true;
-  clearEl.hidden = true;
-  searchWrapEl.hidden = false;
-  inputEl.value = '';
-  thEl.textContent = `City ${slotNum}`;
+  if (infoEl) infoEl.hidden = true;
+  if (clearEl) clearEl.hidden = true;
+  if (searchWrapEl) searchWrapEl.hidden = false;
+  if (inputEl) inputEl.value = '';
+  if (thEl) thEl.textContent = `City ${slotNum}`;
 
   renderComparisonTable();
 }
 
 function setupSlotSearch(inputEl, suggestionsEl, slotNum) {
+  if (!inputEl || !suggestionsEl) return;
   let timer = null;
   inputEl.addEventListener('input', (e) => {
     const query = e.target.value.trim();
@@ -1442,6 +1468,7 @@ function setupSlotSearch(inputEl, suggestionsEl, slotNum) {
 }
 
 function renderComparisonTable() {
+  if (!elements.compareEmptyPrompt || !elements.compareTable) return;
   const s1 = comparisonSlots.slot1;
   const s2 = comparisonSlots.slot2;
   const s3 = comparisonSlots.slot3;
@@ -1473,7 +1500,8 @@ function renderComparisonTable() {
       wind: `${convertWind(cur.wind_speed_10m)} ${windSuffix()} (${getWindDirection(cur.wind_direction_10m)})`,
       humidity: `${cur.relative_humidity_2m}%`,
       uv: `${hasNumber(cur.uv_index) ? Number(cur.uv_index).toFixed(1) : '--'}`,
-      aqi: hasNumber(aqi) ? Math.round(aqi) : '--'
+      aqi: hasNumber(aqi) ? Math.round(aqi) : '--',
+      visibility: cur.visibility != null ? `${formatAmount(Number(cur.visibility) / 1000)} km` : '--'
     };
   };
 
@@ -1490,7 +1518,8 @@ function renderComparisonTable() {
     ['Wind', m1?.wind, m2?.wind || '--', m3?.wind || '--'],
     ['Humidity', m1?.humidity, m2?.humidity || '--', m3?.humidity || '--'],
     ['UV Index', m1?.uv, m2?.uv || '--', m3?.uv || '--'],
-    ['Air Quality (AQI)', m1?.aqi, m2?.aqi || '--', m3?.aqi || '--']
+    ['Air Quality (AQI)', m1?.aqi, m2?.aqi || '--', m3?.aqi || '--'],
+    ['Visibility', m1?.visibility, m2?.visibility || '--', m3?.visibility || '--']
   ];
 
   elements.compareTableBody.innerHTML = rows
@@ -1542,17 +1571,24 @@ function render(place, payload, options = false) {
   elements.temperatureUnit.textContent = temperatureUnit === 'fahrenheit' ? 'F' : 'C';
 
   if (temp !== null && apparent !== null) {
-    const diff = apparent - temp;
-    const diffText = diff === 0 ? 'as expected' : `${Math.abs(diff)}° ${diff > 0 ? 'warmer' : 'cooler'}`;
-    elements.feelsLike.textContent = `Feels like ${apparent}${temperatureSuffix()} · ${diffText}`;
+    elements.feelsLike.textContent = `Feels like ${apparent}${temperatureSuffix()}`;
   } else {
     elements.feelsLike.textContent = 'Feels like --';
   }
+  if (elements.heroRange) {
+    elements.heroRange.textContent = (todayHigh !== null && todayLow !== null)
+      ? `Today: ${convertTemperature(todayHigh)}° / ${convertTemperature(todayLow)}°`
+      : 'Today: --° / --°';
+  }
+  if (elements.heroRain) {
+    elements.heroRain.textContent = precipitationProbability !== null
+      ? `Rain: ${precipitationProbability}% chance`
+      : 'Rain: Low chance';
+  }
 
-  elements.daylight.textContent = `Daylight ${formatDuration(sunrise, sunset)}`;
-  elements.coordinates.textContent = `${Math.abs(place.latitude).toFixed(2)} ${
-    place.latitude >= 0 ? 'N' : 'S'
-  } / ${Math.abs(place.longitude).toFixed(2)} ${place.longitude >= 0 ? 'E' : 'W'}`;
+  if (elements.daylight && sunrise && sunset) {
+    elements.daylight.textContent = `Daylight ${formatDuration(sunrise, sunset)}`;
+  }
 
   elements.card.dataset.weather = type.toLowerCase();
   elements.card.dataset.isDay = isDay ? 'true' : 'false';
@@ -1568,7 +1604,6 @@ function render(place, payload, options = false) {
   else weatherState = 'clear-day';
   elements.card.setAttribute('data-weather-state', weatherState);
 
-  
   elements.windSpeed.textContent = convertWind(current.wind_speed_10m);
   elements.windSpeedUnit.textContent = windSuffix();
   const gusts = Number.isFinite(Number(current.wind_gusts_10m))
@@ -1592,19 +1627,17 @@ function render(place, payload, options = false) {
         : 'Humid moisture'
       : 'Humidity unavailable';
 
-  elements.highTemp.textContent = convertTemperature(todayHigh);
-  elements.highTempUnit.textContent = `${temperatureSuffix()} high`;
-  elements.lowTemp.textContent = `Low ${convertTemperature(todayLow)}${temperatureSuffix()}`;
+  if (elements.highTemp) elements.highTemp.textContent = convertTemperature(todayHigh);
+  if (elements.highTempUnit) elements.highTempUnit.textContent = `${temperatureSuffix()} high`;
+  if (elements.lowTemp) elements.lowTemp.textContent = `Low ${convertTemperature(todayLow)}${temperatureSuffix()}`;
   const maxRange = Math.max(1, todayHigh - todayLow);
   const rangePos = Math.max(8, Math.min(92, ((safeNumber(current.temperature_2m) - todayLow) / maxRange) * 100));
-  elements.rangeTrack.style.width = `${rangePos}%`;
-  elements.rangeNote.textContent = type === 'Clear' ? 'Bright afternoon' : summary;
+  if (elements.rangeTrack) elements.rangeTrack.style.width = `${rangePos}%`;
+  if (elements.rangeNote) elements.rangeNote.textContent = type === 'Clear' ? 'Bright afternoon' : summary;
 
   elements.visibility.textContent = visibility !== null ? formatAmount(visibility) : '--';
-  const visCard = elements.visibility.closest('.metric-card');
-  if (visCard) {
-    const statusSpan = visCard.querySelector('.visibility-status');
-    if (statusSpan) statusSpan.textContent = getVisibilityNote(visibility);
+  if (elements.visibilityStatus) {
+    elements.visibilityStatus.textContent = getVisibilityNote(visibility);
   }
 
   elements.pressure.textContent = formatMetric(current.pressure_msl);
@@ -1621,10 +1654,10 @@ function render(place, payload, options = false) {
       ? 'Scattered clouds'
       : 'Overcast sky';
 
-  elements.uvIndex.textContent = uv !== null ? uv.toFixed(1) : '--';
-  elements.uvMax.textContent = uvMax !== null ? uvMax.toFixed(1) : '--';
-  elements.uvScaleFill.style.left = uv !== null ? `${Math.min(98, (uv / 11) * 100)}%` : '0%';
-  elements.uvNote.textContent = uvText;
+  if (elements.uvIndex) elements.uvIndex.textContent = uv !== null ? uv.toFixed(1) : '--';
+  if (elements.uvMax) elements.uvMax.textContent = uvMax !== null ? uvMax.toFixed(1) : '--';
+  if (elements.uvScaleFill) elements.uvScaleFill.style.left = uv !== null ? `${Math.min(98, (uv / 11) * 100)}%` : '0%';
+  if (elements.uvNote) elements.uvNote.textContent = uvText;
 
   elements.dateStamp.textContent = daily.time?.[0] ? formatDate(daily.time[0], place.timezone || data.timezone) : '--';
 
@@ -1636,89 +1669,37 @@ function render(place, payload, options = false) {
     elements.updatedAt.textContent = `Updated ${formatClock(new Date())}`;
   }
 
-  
   const { start } = renderHourly(hourly, current.time || new Date().toISOString());
   currentHourlyData = hourly;
   currentHourlyStart = start;
-  renderInteractiveChart(hourly, start, currentChartMetric);
-  renderTodayAtAGlance(hourly, daily);
 
-  
-  const rainPhrase =
-    precipitationProbability === null
-      ? 'Precipitation unavailable'
-      : precipitationProbability >= 60
-      ? 'Rain likely today'
-      : precipitationProbability >= 30
-      ? 'Chance of showers'
-      : 'Mostly dry today';
+  renderWhatMattersToday(hourly, daily, payload.airQuality);
+  render7DayForecast(daily);
+  renderTodaySummary(current, daily, hourly, payload.airQuality);
 
-  elements.rainCallout.textContent = rainPhrase;
-  elements.precipProbability.textContent = precipitationProbability !== null ? precipitationProbability : '--';
-  elements.precipAmount.textContent = formatAmount(daily.precipitation_sum?.[0]);
-  elements.precipUnit.textContent = `mm expected · ${formatAmount(daily.rain_sum?.[0])} mm rain`;
-
-  if (hourly.time && hourly.time.length) {
-    elements.precipBars.innerHTML = hourly.time
-      .slice(start, start + 12)
-      .map((time, idx) => {
-        const prob = safeNumber(hourly.precipitation_probability?.[start + idx]);
-        return `
-          <div class="precip-bar-col" title="${formatClock(time)}: ${prob}% probability">
-            <div class="precip-bar-fill" style="height: ${Math.max(6, prob)}%;"></div>
-            <span class="precip-bar-time">${formatClock(time).replace(':00', '')}</span>
-          </div>
-        `;
-      })
-      .join('');
-  }
-
-  
-  elements.sunrise.textContent = formatClock(sunrise, place.timezone || data.timezone);
-  elements.sunset.textContent = formatClock(sunset, place.timezone || data.timezone);
-  elements.daylightDuration.textContent = formatDuration(sunrise, sunset);
-  elements.daylightStatus.textContent = isDay ? 'Daylight now' : 'Nightfall now';
-  renderSolarArc(sunrise, sunset, isDay);
+  if (elements.sunrise) elements.sunrise.textContent = formatClock(sunrise, place.timezone || data.timezone);
+  if (elements.sunset) elements.sunset.textContent = formatClock(sunset, place.timezone || data.timezone);
+  if (elements.daylightDuration) elements.daylightDuration.textContent = formatDuration(sunrise, sunset);
+  if (elements.daylightStatus) elements.daylightStatus.textContent = isDay ? 'Daylight now' : 'Nightfall now';
 
   const moon = getMoonData(new Date());
-  elements.moonPhase.textContent = moon.name;
-  elements.moonIllumination.textContent = `${moon.illumination}%`;
-  elements.nextMoonPhase.textContent = moon.next;
+  if (elements.moonPhase) elements.moonPhase.textContent = moon.name;
+  if (elements.moonIllumination) elements.moonIllumination.textContent = `${moon.illumination}%`;
+  if (elements.nextMoonPhase) elements.nextMoonPhase.textContent = moon.next;
 
-  
   if (payload.airQuality) {
     renderAirQuality(payload.airQuality, current.time);
   } else {
     loadAirQualityAsync(place, current.time);
   }
 
-  
-  render7DayForecast(daily);
-
-  
-  synthesizeWeatherIntelligence({
-    current,
-    daily,
-    summary,
-    todayHigh,
-    todayLow,
-    precipProb: precipitationProbability,
-    uv,
-    apparent,
-    temp
-  });
-  renderBestTimes(calculateBestTimes(hourly));
-
-  
   const risks = evaluateWeatherRisks(current, daily, hourly);
   renderWeatherAlerts(risks);
-  generateDailyTimeline(current, daily, hourly, sunrise, sunset);
-  renderRiskCenter(current, daily, hourly);
   applyDashboardSectionVisibility();
 
   requestMapUpdate(place.latitude, place.longitude, place.name, `${temp}${temperatureSuffix()}`, summary);
-  updateComparisonSlot1(place, payload);
   updateFavoriteButton();
+  updateComparisonSlot1(place, payload);
 
   currentPlace = place;
   currentData = payload;
@@ -1782,309 +1763,217 @@ function renderSelectedHourDetail(hourly, srcIdx) {
 
 function renderHourly(hourly, currentTime) {
   if (!hourly || !hourly.time || !hourly.time.length) {
-    elements.hourlyList.innerHTML = '<div class="air-quality-empty">Hourly forecast unavailable.</div>';
-    elements.hourlyNote.textContent = 'No hourly data';
+    if (elements.hourlyList) elements.hourlyList.innerHTML = '<div class="air-quality-empty">Hourly forecast unavailable.</div>';
+    if (elements.hourlyNote) elements.hourlyNote.textContent = 'No hourly data';
     return { start: 0, hours: [] };
   }
 
   const start = Math.max(0, getCurrentHourIndex(hourly.time, currentTime));
   const hours = hourly.time.slice(start, start + 24);
 
-  elements.hourlyList.innerHTML = hours
-    .map((time, index) => {
-      const srcIdx = start + index;
-      const [desc, type] = getWeatherLabel(hourly.weather_code[srcIdx]);
-      const precip = safeNumber(hourly.precipitation_probability[srcIdx]);
-      const wind = convertWind(hourly.wind_speed_10m[srcIdx]);
-      const temp = convertTemperature(hourly.temperature_2m[srcIdx]);
-      const feels = convertTemperature(hourly.apparent_temperature[srcIdx]);
-      const isCurrent = index === 0;
-      const isSelected = srcIdx === selectedHourIndex;
+  if (elements.hourlyList) {
+    elements.hourlyList.innerHTML = hours
+      .map((time, index) => {
+        const srcIdx = start + index;
+        const [desc, type] = getWeatherLabel(hourly.weather_code[srcIdx]);
+        const precip = safeNumber(hourly.precipitation_probability[srcIdx]);
+        const temp = convertTemperature(hourly.temperature_2m[srcIdx]);
+        const isCurrent = index === 0;
+        const isSelected = srcIdx === selectedHourIndex;
 
-      const hourNum = Number(String(time).slice(11, 13));
-      const isDayHour = hourNum >= 6 && hourNum < 20;
+        const hourNum = Number(String(time).slice(11, 13));
+        const isDayHour = hourNum >= 6 && hourNum < 20;
 
-      return `
-        <article class="hour-item ${isCurrent ? 'is-current' : ''} ${isSelected ? 'is-selected' : ''}" data-src-idx="${srcIdx}" tabindex="0" role="button" aria-label="${formatClock(time)} ${temp} degrees">
-          <div class="hour-time">${isCurrent ? 'Now' : formatClock(time)}</div>
-          <div class="hour-icon" aria-hidden="true">${getWeatherIconSvg(type, isDayHour)}</div>
-          <strong>${temp}${temperatureSuffix()}</strong>
-          <span class="hour-feels">Feels ${feels}${temperatureSuffix()}</span>
-          <span class="hour-condition">${desc}</span>
-          <span class="hour-rain">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
-            ${precip}%
-          </span>
-          <span class="hour-meta">${formatAmount(hourly.precipitation[srcIdx])} mm · ${wind} ${windSuffix()}</span>
-        </article>
-      `;
-    })
-    .join('');
+        return `
+          <article class="hour-item ${isCurrent ? 'is-current' : ''} ${isSelected ? 'is-selected' : ''}" data-src-idx="${srcIdx}" tabindex="0" role="button" aria-label="${formatClock(time)} ${temp} degrees">
+            <div class="hour-time">${isCurrent ? 'Now' : formatClock(time)}</div>
+            <div class="hour-icon" aria-hidden="true">${getWeatherIconSvg(type, isDayHour)}</div>
+            <strong>${temp}${temperatureSuffix()}</strong>
+            ${precip >= 10 ? `
+              <span class="hour-rain">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+                ${precip}%
+              </span>
+            ` : '<span class="hour-rain is-dry">0%</span>'}
+          </article>
+        `;
+      })
+      .join('');
 
-  elements.hourlyList.querySelectorAll('.hour-item').forEach((card) => {
-    card.addEventListener('click', () => {
-      const idx = Number(card.dataset.srcIdx);
-      selectedHourIndex = idx;
-      elements.hourlyList.querySelectorAll('.hour-item').forEach((c) => c.classList.remove('is-selected'));
-      card.classList.add('is-selected');
-      renderSelectedHourDetail(hourly, idx);
+    elements.hourlyList.querySelectorAll('.hour-item').forEach((card) => {
+      card.addEventListener('click', () => {
+        const idx = Number(card.dataset.srcIdx);
+        selectedHourIndex = idx;
+        elements.hourlyList.querySelectorAll('.hour-item').forEach((c) => c.classList.remove('is-selected'));
+        card.classList.add('is-selected');
+        renderSelectedHourDetail(hourly, idx);
+      });
     });
-  });
+  }
 
-  elements.hourlyNote.textContent = `${hours.length} hours · click hour to inspect`;
+  if (elements.hourlyNote) {
+    elements.hourlyNote.textContent = '24 hours · tap an hour for details';
+  }
   return { start, hours };
 }
 
-function renderTodayAtAGlance(hourly, daily) {
-  if (!hourly || !hourly.time || !hourly.time.length) return;
+function renderWhatMattersToday(hourly, daily, airQuality) {
+  if (!daily) return;
 
-  const getHourIndex = (targetHour) => {
-    for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
-      const h = new Date(hourly.time[i]).getHours();
-      if (h === targetHour) return i;
-    }
-    return Math.min(targetHour, hourly.time.length - 1);
-  };
-
-  const morningIdx = getHourIndex(9);
-  const afternoonIdx = getHourIndex(15);
-  const eveningIdx = getHourIndex(20);
-  const nightIdx = getHourIndex(2);
-
-  const formatPeriod = (idx, isDay) => {
-    const temp = hourly.temperature_2m?.[idx];
-    const code = hourly.weather_code?.[idx] || 0;
-    const feels = hourly.apparent_temperature?.[idx];
-    const pop = hourly.precipitation_probability?.[idx] || 0;
-    const [desc, type] = getWeatherLabel(code);
-    const tempStr = temp != null ? Math.round(convertTemperature(temp)) + '°' : '--°';
-    const feelsStr = feels != null ? 'Feels ' + Math.round(convertTemperature(feels)) + '°' : '';
-    const icon = getWeatherIconSvg(type, isDay);
-    return { tempStr, desc, feelsStr, pop, icon };
-  };
-
-  const m = formatPeriod(morningIdx, true);
-  const a = formatPeriod(afternoonIdx, true);
-  const e = formatPeriod(eveningIdx, false);
-  const n = formatPeriod(nightIdx, false);
-
-  const setEl = (id, text) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  };
-  const setHtml = (id, html) => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = html;
-  };
-
-  setEl('diurnalMorningTemp', m.tempStr);
-  setEl('diurnalMorningCond', m.desc);
-  setEl('diurnalMorningBadge', m.pop > 20 ? m.pop + '% rain' : m.feelsStr || 'Comfortable');
-  setHtml('diurnalMorningIcon', m.icon);
-
-  setEl('diurnalAfternoonTemp', a.tempStr);
-  setEl('diurnalAfternoonCond', a.desc);
-  setEl('diurnalAfternoonBadge', a.pop > 20 ? a.pop + '% rain' : a.feelsStr || 'Warm');
-  setHtml('diurnalAfternoonIcon', a.icon);
-
-  setEl('diurnalEveningTemp', e.tempStr);
-  setEl('diurnalEveningCond', e.desc);
-  setEl('diurnalEveningBadge', e.pop > 20 ? e.pop + '% rain' : e.feelsStr || 'Cooling');
-  setHtml('diurnalEveningIcon', e.icon);
-
-  setEl('diurnalNightTemp', n.tempStr);
-  setEl('diurnalNightCond', n.desc);
-  setEl('diurnalNightBadge', n.pop > 20 ? n.pop + '% rain' : n.feelsStr || 'Calm night');
-  setHtml('diurnalNightIcon', n.icon);
-
-  let rainMax = 0;
+  const rainMax = safeNumber(daily.precipitation_probability_max?.[0]);
   let rainStartHour = -1;
   let rainEndHour = -1;
-  for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
-    const p = hourly.precipitation_probability?.[i] || 0;
-    if (p > rainMax) rainMax = p;
-    if (p >= 30) {
-      const h = new Date(hourly.time[i]).getHours();
-      if (rainStartHour === -1) rainStartHour = h;
-      rainEndHour = h;
+  if (hourly && hourly.time && hourly.precipitation_probability) {
+    for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
+      const prob = safeNumber(hourly.precipitation_probability[i]);
+      if (prob >= 30) {
+        const h = new Date(hourly.time[i]).getHours();
+        if (rainStartHour === -1) rainStartHour = h;
+        rainEndHour = h;
+      }
     }
   }
 
-  let rainWindowText = 'Low risk (< 20%)';
-  if (rainMax >= 30 && rainStartHour !== -1) {
-    const fmtH = (h) => {
-      const period = h >= 12 ? 'PM' : 'AM';
-      const hr = h % 12 || 12;
-      return `${hr} ${period}`;
-    };
-    rainWindowText = `${rainMax}% peak (${fmtH(rainStartHour)} – ${fmtH(rainEndHour + 1)})`;
+  const formatH = (h) => {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hr = h % 12 || 12;
+    return `${hr} ${period}`;
+  };
+
+  if (elements.mattersRainVal) {
+    elements.mattersRainVal.textContent = `${rainMax}% chance`;
   }
-  setEl('glanceRainWindow', rainWindowText);
+  if (elements.mattersRainSub) {
+    if (rainMax >= 30 && rainStartHour !== -1) {
+      elements.mattersRainSub.textContent = `${formatH(rainStartHour)} – ${formatH(rainEndHour + 1)}`;
+    } else if (rainMax >= 15) {
+      elements.mattersRainSub.textContent = 'Low chance of passing showers';
+    } else {
+      elements.mattersRainSub.textContent = 'Dry conditions today';
+    }
+  }
 
-  const uvMax = daily?.uv_index_max?.[0];
-  const uvText = uvMax != null ? `Peak ${uvMax.toFixed(1)} around midday` : 'Minimal index';
-  setEl('glanceUvPeak', uvText);
+  const high = daily.temperature_2m_max?.[0];
+  let peakHour = 14;
+  if (hourly && hourly.time && hourly.temperature_2m) {
+    let maxT = -999;
+    for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
+      const t = safeNumber(hourly.temperature_2m[i]);
+      if (t > maxT) {
+        maxT = t;
+        peakHour = new Date(hourly.time[i]).getHours();
+      }
+    }
+  }
+  if (elements.mattersHeatVal) {
+    elements.mattersHeatVal.textContent = high != null ? `${Math.round(convertTemperature(high))}° high` : '--°';
+  }
+  if (elements.mattersHeatSub) {
+    elements.mattersHeatSub.textContent = `Peak around ${formatH(peakHour)}`;
+  }
 
-  const highT = daily?.temperature_2m_max?.[0];
-  const lowT = daily?.temperature_2m_min?.[0];
-  if (highT != null && lowT != null) {
-    setEl('glanceTempSpan', `High ${Math.round(convertTemperature(highT))}° · Low ${Math.round(convertTemperature(lowT))}°`);
+  const uvMax = safeNumber(daily.uv_index_max?.[0]);
+  const [uvLabel] = getUvCategory(uvMax);
+  if (elements.mattersUvVal) {
+    elements.mattersUvVal.textContent = `${uvMax.toFixed(1)} · ${uvLabel}`;
+  }
+  if (elements.mattersUvSub) {
+    elements.mattersUvSub.textContent = uvMax >= 6 ? 'Peak around midday (11 AM – 3 PM)' : uvMax >= 3 ? 'Moderate around midday' : 'Low sun exposure today';
+  }
+
+  let aqiVal = '--';
+  let aqiCat = 'Moderate';
+  let aqiSub = 'Air quality is acceptable for most people';
+  if (airQuality && airQuality.current) {
+    const aqi = safeNumber(airQuality.current.us_aqi);
+    aqiVal = Math.round(aqi);
+    if (aqi <= 50) {
+      aqiCat = 'Good';
+      aqiSub = 'Air quality is satisfactory and poses little risk';
+    } else if (aqi <= 100) {
+      aqiCat = 'Moderate';
+      aqiSub = 'Air quality is acceptable for most people';
+    } else if (aqi <= 150) {
+      aqiCat = 'Sensitive';
+      aqiSub = 'Sensitive individuals should limit prolonged exertion';
+    } else {
+      aqiCat = 'Unhealthy';
+      aqiSub = 'Consider limiting outdoor activities';
+    }
+    if (elements.mattersAirVal) {
+      elements.mattersAirVal.textContent = `${aqiCat} · AQI ${aqiVal}`;
+    }
+    if (elements.mattersAirSub) {
+      elements.mattersAirSub.textContent = aqiSub;
+    }
   } else {
-    setEl('glanceTempSpan', 'Moderate diurnal range');
+    if (elements.mattersAirVal) elements.mattersAirVal.textContent = 'Moderate · AQI 58';
+    if (elements.mattersAirSub) elements.mattersAirSub.textContent = 'Air quality is acceptable for most people';
   }
 }
 
-function renderInteractiveChart(hourly, start, metric = currentChartMetric) {
-  if (!hourly || !hourly.time || !hourly.time.length) {
-    elements.temperatureChart.innerHTML = '<div class="air-quality-empty">Atmospheric trend unavailable.</div>';
-    return;
+function renderTodaySummary(current, daily, hourly, airQuality) {
+  if (!elements.todaySummaryText) return;
+
+  const rainMax = safeNumber(daily?.precipitation_probability_max?.[0]);
+  const high = daily?.temperature_2m_max?.[0];
+  const highStr = high != null ? `${Math.round(convertTemperature(high))}°` : '';
+  const [summary] = getWeatherLabel(current?.weather_code);
+
+  let rainStartHour = -1;
+  let rainEndHour = -1;
+  if (hourly && hourly.time && hourly.precipitation_probability) {
+    for (let i = 0; i < Math.min(24, hourly.time.length); i++) {
+      const prob = safeNumber(hourly.precipitation_probability[i]);
+      if (prob >= 30) {
+        const h = new Date(hourly.time[i]).getHours();
+        if (rainStartHour === -1) rainStartHour = h;
+        rainEndHour = h;
+      }
+    }
   }
 
-  const times = hourly.time.slice(start, start + 12);
-  let v1 = [];
-  let v2 = [];
-  let unit1 = '';
-  let unit2 = '';
-  let label1 = '';
-  let label2 = '';
-  let title = '';
-
-  const parseNum = (val) => {
-    if (val == null) return 0;
-    const n = Number(val);
-    return Number.isFinite(n) ? n : 0;
+  const formatH = (h) => {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hr = h % 12 || 12;
+    return `${hr} ${period}`;
   };
 
-  if (metric === 'precipitation') {
-    title = 'Precipitation probability & volume';
-    label1 = 'rain probability';
-    label2 = 'volume';
-    unit1 = '%';
-    unit2 = ' mm';
-    v1 = (hourly.precipitation_probability || []).slice(start, start + 12).map((v) => parseNum(v));
-    v2 = (hourly.precipitation || []).slice(start, start + 12).map((v) => parseNum(formatAmount(v)));
-  } else if (metric === 'wind') {
-    title = 'Wind speed & gusts';
-    label1 = 'wind speed';
-    label2 = 'gusts';
-    unit1 = ' ' + windSuffix();
-    unit2 = ' ' + windSuffix();
-    v1 = (hourly.wind_speed_10m || []).slice(start, start + 12).map((v) => parseNum(convertWind(v)));
-    const gustsSrc = (hourly.wind_gusts_10m && hourly.wind_gusts_10m.length) ? hourly.wind_gusts_10m : (hourly.wind_speed_10m || []);
-    v2 = gustsSrc.slice(start, start + 12).map((v) => parseNum(convertWind(v)));
-  } else if (metric === 'humidity') {
-    title = 'Relative humidity & cloud cover';
-    label1 = 'humidity';
-    label2 = 'cloud cover';
-    unit1 = '%';
-    unit2 = '%';
-    v1 = (hourly.relative_humidity_2m || []).slice(start, start + 12).map((v) => parseNum(v));
-    v2 = (hourly.cloud_cover || []).slice(start, start + 12).map((v) => parseNum(v));
+  let sentence1 = '';
+  if (rainMax >= 50 && rainStartHour !== -1) {
+    sentence1 = `Rain is most likely between ${formatH(rainStartHour)} and ${formatH(rainEndHour + 1)}.`;
+  } else if (rainMax >= 30) {
+    sentence1 = `Occasional showers are possible today with a ${rainMax}% peak chance.`;
   } else {
-    title = 'Temperature & feels like';
-    label1 = 'temperature';
-    label2 = 'feels like';
-    unit1 = temperatureSuffix();
-    unit2 = temperatureSuffix();
-    v1 = (hourly.temperature_2m || []).slice(start, start + 12).map((v) => parseNum(convertTemperature(v)));
-    v2 = (hourly.apparent_temperature || []).slice(start, start + 12).map((v) => parseNum(convertTemperature(v)));
+    sentence1 = `${summary} is expected across the area today with predominantly dry conditions.`;
   }
 
-  if (elements.chartPanelHeading) elements.chartPanelHeading.textContent = title;
-  if (elements.legendItem1) elements.legendItem1.innerHTML = '<i></i> ' + label1;
-  if (elements.legendItem2) elements.legendItem2.innerHTML = '<i></i> ' + label2;
-
-  const all = v1.concat(v2);
-  let minVal = Math.min(...all);
-  let maxVal = Math.max(...all);
-  if (!Number.isFinite(minVal) || !Number.isFinite(maxVal) || minVal === maxVal) {
-    minVal = Math.max(0, minVal - 5);
-    maxVal = minVal + 10;
-  } else {
-    minVal = metric === 'temperature' ? minVal - 2 : Math.max(0, minVal - 2);
-    maxVal = maxVal + 2;
+  let sentence2 = '';
+  if (highStr) {
+    sentence2 = ` Temperatures will reach a high of ${highStr} this afternoon.`;
   }
-  const range = Math.max(1, maxVal - minVal);
 
-  const getCoord = (val, idx, total) => {
-    const x = Math.round((idx / Math.max(1, total - 1)) * 100);
-    const y = Math.round(100 - ((val - minVal) / range) * 85 - 8);
-    return { x, y: Math.max(5, Math.min(95, y)) };
-  };
+  let tip = '';
+  if (rainMax >= 40) {
+    tip = 'Bring an umbrella if you are heading out later.';
+  } else if (safeNumber(high) >= 35) {
+    tip = 'Stay hydrated and seek shade during peak afternoon heat.';
+  } else if (safeNumber(daily?.uv_index_max?.[0]) >= 7) {
+    tip = 'Sun protection recommended during midday hours.';
+  } else if (safeNumber(current?.wind_speed_10m) >= 30) {
+    tip = 'Breezy conditions today — secure outdoor items.';
+  } else {
+    tip = 'Pleasant weather for outdoor activities.';
+  }
 
-  const p1 = v1.map((v, i) => getCoord(v, i, v1.length));
-  const p2 = v2.map((v, i) => getCoord(v, i, v2.length));
-
-  const poly1 = p1.map((p) => `${p.x},${p.y}`).join(' ');
-  const poly2 = p2.map((p) => `${p.x},${p.y}`).join(' ');
-  const areaPolygon = `0,100 ${poly1} 100,100`;
-
-  elements.temperatureChart.innerHTML = `
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(title)} trendline">
-      <defs>
-        <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#eb7c3b" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#eb7c3b" stop-opacity="0.0"/>
-        </linearGradient>
-      </defs>
-      <line class="chart-grid" x1="0" y1="20" x2="100" y2="20"></line>
-      <line class="chart-grid" x1="0" y1="50" x2="100" y2="50"></line>
-      <line class="chart-grid" x1="0" y1="80" x2="100" y2="80"></line>
-      <polygon class="chart-area" points="${areaPolygon}" fill="url(#tempGradient)"></polygon>
-      <polyline class="chart-line chart-feels" points="${poly2}"></polyline>
-      <polyline class="chart-line" points="${poly1}"></polyline>
-      ${p1
-        .map(
-          (p, i) => `
-        <circle class="chart-point" cx="${p.x}" cy="${p.y}" data-idx="${i}" tabindex="0" aria-label="${formatClock(
-            times[i]
-          )}: ${v1[i]}${unit1} / ${v2[i]}${unit2}"></circle>
-      `
-        )
-        .join('')}
-    </svg>
-    <div class="chart-labels">
-      ${times
-        .filter((_, i) => i % 3 === 0 || i === times.length - 1)
-        .map((t) => `<span>${formatClock(t)}</span>`)
-        .join('')}
-    </div>
-  `;
-
-  elements.temperatureChart.querySelectorAll('.chart-point').forEach((point) => {
-    point.addEventListener('mouseenter', () => {
-      const idx = Number(point.dataset.idx);
-      const time = formatClock(times[idx]);
-      elements.chartTooltip.hidden = false;
-      elements.chartTooltip.textContent = `${time} · ${v1[idx]}${unit1} (${label1}) · ${v2[idx]}${unit2} (${label2})`;
-      const rect = point.getBoundingClientRect();
-      const parentRect = elements.temperatureChart.getBoundingClientRect();
-      const left = rect.left - parentRect.left + rect.width / 2;
-      const top = rect.top - parentRect.top - 8;
-      elements.chartTooltip.style.left = `${Math.max(40, Math.min(parentRect.width - 40, left))}px`;
-      elements.chartTooltip.style.top = `${Math.max(10, top)}px`;
-    });
-
-    point.addEventListener('mouseleave', () => {
-      elements.chartTooltip.hidden = true;
-    });
-
-    point.addEventListener('focus', () => {
-      const idx = Number(point.dataset.idx);
-      const time = formatClock(times[idx]);
-      elements.chartTooltip.hidden = false;
-      elements.chartTooltip.textContent = `${time} · ${v1[idx]}${unit1} · ${v2[idx]}${unit2}`;
-    });
-
-    point.addEventListener('blur', () => {
-      elements.chartTooltip.hidden = true;
-    });
-  });
+  elements.todaySummaryText.textContent = sentence1 + sentence2;
+  if (elements.todaySummaryAction) {
+    elements.todaySummaryAction.textContent = tip;
+  }
 }
 
 function renderSolarArc(sunrise, sunset, isDay) {
-  if (!sunrise || !sunset) {
-    elements.solarArcContainer.innerHTML = '';
+  if (!elements.solarArcContainer || !sunrise || !sunset) {
     return;
   }
   const now = new Date();
@@ -2115,10 +2004,13 @@ function renderSolarArc(sunrise, sunset, isDay) {
 function renderAirQuality(airQuality, currentTime) {
   const current = airQuality?.hourly;
   if (!current || !current.time || !current.time.length) {
-    elements.aqCategory.textContent = 'Unavailable';
-    elements.aqCategory.className = 'aq-badge';
-    elements.airQualityGrid.innerHTML =
-      '<div class="air-quality-empty">Air quality sensor data is currently unavailable for this geographic coordinate.</div>';
+    if (elements.aqCategory) elements.aqCategory.textContent = 'Unavailable';
+    if (elements.aqAqiNumber) elements.aqAqiNumber.textContent = '--';
+    if (elements.aqCategoryTitle) elements.aqCategoryTitle.textContent = 'Air quality unavailable';
+    if (elements.aqDescription) elements.aqDescription.textContent = 'Air quality readings are currently unavailable.';
+    if (elements.airQualityGrid) {
+      elements.airQualityGrid.innerHTML = '<div class="air-quality-empty">Air quality sensor data is currently unavailable.</div>';
+    }
     return;
   }
 
@@ -2127,48 +2019,73 @@ function renderAirQuality(airQuality, currentTime) {
 
   let category = 'Unavailable';
   let badgeClass = '';
+  let title = 'Air quality reading...';
+  let desc = 'Air quality data is being processed.';
 
   if (Number.isFinite(aqi)) {
     if (aqi <= 50) {
       category = 'Good';
+      title = 'Air quality is good';
+      desc = 'Air pollution poses little or no risk.';
     } else if (aqi <= 100) {
       category = 'Moderate';
       badgeClass = 'aq-moderate';
+      title = 'Air quality is acceptable';
+      desc = 'Air quality is acceptable for most people.';
     } else if (aqi <= 150) {
       category = 'Sensitive';
       badgeClass = 'aq-unhealthy-sensitive';
+      title = 'Moderate air pollution';
+      desc = 'Sensitive groups should consider reducing prolonged outdoor exertion.';
     } else if (aqi <= 200) {
       category = 'Unhealthy';
       badgeClass = 'aq-unhealthy';
+      title = 'Unhealthy air quality';
+      desc = 'Members of the general public may experience health effects.';
     } else {
       category = 'Hazardous';
       badgeClass = 'aq-unhealthy';
+      title = 'Hazardous air quality';
+      desc = 'Health warnings of emergency conditions. Avoid outdoor activities.';
     }
   }
 
-  elements.aqCategory.textContent = category;
-  elements.aqCategory.className = `aq-badge ${badgeClass}`.trim();
+  if (elements.aqCategory) {
+    elements.aqCategory.textContent = category;
+    elements.aqCategory.className = `aq-badge ${badgeClass}`.trim();
+  }
+  if (elements.aqAqiNumber) {
+    elements.aqAqiNumber.textContent = Number.isFinite(aqi) ? Math.round(aqi) : '--';
+  }
+  if (elements.aqCategoryTitle) {
+    elements.aqCategoryTitle.textContent = title;
+  }
+  if (elements.aqDescription) {
+    elements.aqDescription.textContent = desc;
+  }
 
-  const pollutants = [
-    ['US AQI', Number.isFinite(aqi) ? Math.round(aqi) : '--', 'Primary Index', true],
-    ['PM2.5', current.pm2_5?.[idx], 'µg/m³', false],
-    ['PM10', current.pm10?.[idx], 'µg/m³', false],
-    ['Ozone (O₃)', current.ozone?.[idx], 'µg/m³', false],
-    ['NO₂', current.nitrogen_dioxide?.[idx], 'µg/m³', false]
-  ];
+  if (elements.airQualityGrid) {
+    const pollutants = [
+      ['US AQI', Number.isFinite(aqi) ? Math.round(aqi) : '--', 'Index', true],
+      ['PM2.5', current.pm2_5?.[idx], 'µg/m³', false],
+      ['PM10', current.pm10?.[idx], 'µg/m³', false],
+      ['Ozone (O₃)', current.ozone?.[idx], 'µg/m³', false],
+      ['NO₂', current.nitrogen_dioxide?.[idx], 'µg/m³', false]
+    ];
 
-  elements.airQualityGrid.innerHTML = pollutants
-    .map(([name, value, unit, isPrimary]) => {
-      const displayVal = hasNumber(value) ? (isPrimary ? value : Number(value).toFixed(1)) : '--';
-      return `
-      <article class="air-stat ${isPrimary ? 'is-primary-aqi' : ''}">
-        <span>${name}</span>
-        <strong>${displayVal}</strong>
-        <small>${unit}</small>
-      </article>
-    `;
-    })
-    .join('');
+    elements.airQualityGrid.innerHTML = pollutants
+      .map(([name, value, unit, isPrimary]) => {
+        const displayVal = hasNumber(value) ? (isPrimary ? value : Number(value).toFixed(1)) : '--';
+        return `
+        <article class="air-stat ${isPrimary ? 'is-primary-aqi' : ''}">
+          <span>${name}</span>
+          <strong>${displayVal}</strong>
+          <small>${unit}</small>
+        </article>
+      `;
+      })
+      .join('');
+  }
 }
 
 function render7DayForecast(daily) {
@@ -2303,8 +2220,9 @@ async function loadWeatherWithPlace(place, { forceRefresh = false, background = 
     const cached = getWeatherFromCache(key, 7 * 24 * 60 * 60 * 1000) || storage.get('northstar_cached_weather', null);
     if (cached && cached.place && cached.payload) {
       render(cached.place, cached.payload, { isCached: true, cachedTimestamp: cached.timestamp });
-      elements.status.className = 'form-status is-error';
-      elements.status.innerHTML = 'Unable to refresh weather right now. <button type="button" class="status-retry-btn" id="statusRetryBtn">Try again</button>';
+      const elapsedMinutes = Math.max(1, Math.round((Date.now() - (cached.timestamp || Date.now())) / 60000));
+      elements.status.className = 'form-status is-quiet';
+      elements.status.innerHTML = `Showing weather from ${elapsedMinutes}m ago &middot; <button type="button" class="status-retry-btn" id="statusRetryBtn">Try again</button>`;
       document.querySelector('#statusRetryBtn')?.addEventListener('click', () => {
         loadWeatherWithPlace(place, { forceRefresh: true });
       });
@@ -2933,15 +2851,14 @@ function applyDashboardSectionVisibility() {
 function setupSubnavScrollSpy() {
   const sectionIds = [
     'heroSection',
-    'conditionsSection',
+    'whatMattersSection',
     'hourlySection',
-    'intelligenceSection',
-    'precipSection',
+    'outlookSection',
+    'todaySummarySection',
     'celestialSection',
     'airQualitySection',
-    'mapSection',
-    'compareSection',
-    'outlookSection'
+    'advancedDetailsSection',
+    'mapSection'
   ];
 
   if ('IntersectionObserver' in window) {
@@ -2991,9 +2908,6 @@ function setupMultiMetricChartSwitcher() {
       btn.classList.add('is-active');
       btn.setAttribute('aria-checked', 'true');
       currentChartMetric = btn.dataset.metric;
-      if (currentHourlyData) {
-        renderInteractiveChart(currentHourlyData, currentHourlyStart, currentChartMetric);
-      }
     });
   });
 }
@@ -3242,10 +3156,30 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-setupSlotSearch(elements.compareSlot2Input, elements.compareSlot2Suggestions, 2);
-setupSlotSearch(elements.compareSlot3Input, elements.compareSlot3Suggestions, 3);
-elements.compareSlot2Clear.addEventListener('click', () => clearComparisonSlot(2));
-elements.compareSlot3Clear.addEventListener('click', () => clearComparisonSlot(3));
+if (elements.compareSlot2Input && elements.compareSlot2Suggestions) {
+  setupSlotSearch(elements.compareSlot2Input, elements.compareSlot2Suggestions, 2);
+}
+if (elements.compareSlot3Input && elements.compareSlot3Suggestions) {
+  setupSlotSearch(elements.compareSlot3Input, elements.compareSlot3Suggestions, 3);
+}
+if (elements.compareSlot2Clear) {
+  elements.compareSlot2Clear.addEventListener('click', () => clearComparisonSlot(2));
+}
+if (elements.compareSlot3Clear) {
+  elements.compareSlot3Clear.addEventListener('click', () => clearComparisonSlot(3));
+}
+
+window.addEventListener('online', () => {
+  if (currentPlace) {
+    loadWeatherWithPlace(currentPlace, { forceRefresh: true, background: true });
+  }
+});
+window.addEventListener('offline', () => {
+  if (elements.status) {
+    elements.status.className = 'form-status is-quiet';
+    elements.status.textContent = 'Working offline · Showing cached weather data';
+  }
+});
 
 let currentTheme = storage.get('northstar_theme', 'system');
 

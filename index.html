@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f2730">
   <title>Northstar Weather</title>
-  <meta name="description" content="Northstar Weather — Read the sky before you go. A lightweight weather intelligence dashboard designed to help users understand current conditions, forecasts, air quality, and atmospheric patterns.">
+  <meta name="description" content="Northstar Weather — Read the sky before you go. Clear, simple, and accurate weather forecasts, air quality, and daily highlights.">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
@@ -38,7 +38,7 @@
       <div class="topbar-actions">
         <div class="topbar-meta">
           <span class="live-dot" aria-hidden="true"></span>
-          <span>Live atmospheric feed</span>
+          <span>Live weather</span>
           <span class="topbar-divider" aria-hidden="true"></span>
           <span id="updatedAt">Updated just now</span>
         </div>
@@ -111,15 +111,15 @@
       <div class="subnav-inner">
         <div class="subnav-links" role="tablist">
           <a href="#heroSection" class="subnav-link is-active" role="tab" aria-selected="true" data-section="heroSection">Overview</a>
-          <a href="#conditionsSection" class="subnav-link" role="tab" aria-selected="false" data-section="conditionsSection">Conditions</a>
-          <a href="#hourlySection" class="subnav-link" role="tab" aria-selected="false" data-section="hourlySection">Hourly &amp; Trends</a>
-          <a href="#intelligenceSection" class="subnav-link" role="tab" aria-selected="false" data-section="intelligenceSection">Intelligence</a>
-          <a href="#precipSection" class="subnav-link" role="tab" aria-selected="false" data-section="precipSection">Precipitation</a>
+          <a href="#whatMattersSection" class="subnav-link" role="tab" aria-selected="false" data-section="whatMattersSection">Highlights</a>
+          <a href="#hourlySection" class="subnav-link" role="tab" aria-selected="false" data-section="hourlySection">Hourly</a>
+          <a href="#outlookSection" class="subnav-link" role="tab" aria-selected="false" data-section="outlookSection">7-Day</a>
+          <a href="#todaySummarySection" class="subnav-link" role="tab" aria-selected="false" data-section="todaySummarySection">Summary</a>
           <a href="#celestialSection" class="subnav-link" role="tab" aria-selected="false" data-section="celestialSection">Sun &amp; Moon</a>
           <a href="#airQualitySection" class="subnav-link" role="tab" aria-selected="false" data-section="airQualitySection">Air Quality</a>
+          <a href="#advancedDetailsSection" class="subnav-link" role="tab" aria-selected="false" data-section="advancedDetailsSection">More Details</a>
           <a href="#mapSection" class="subnav-link" role="tab" aria-selected="false" data-section="mapSection">Map</a>
           <a href="#compareSection" class="subnav-link" role="tab" aria-selected="false" data-section="compareSection">Compare</a>
-          <a href="#outlookSection" class="subnav-link" role="tab" aria-selected="false" data-section="outlookSection">7-Day Outlook</a>
         </div>
         <div class="subnav-actions">
           <button type="button" class="subnav-cmd-btn" id="openCommandPaletteBtn" title="Quick search (Ctrl+K)" aria-label="Open search palette">
@@ -135,17 +135,15 @@
       </div>
     </nav>
 
-    
     <section class="weather-alerts-container" id="weatherAlertsContainer" aria-label="Weather Advisories" hidden></section>
 
     <main>
       
       <section class="hero-grid" id="heroSection" aria-labelledby="heroHeading">
         <div class="hero-copy">
-          <p class="eyebrow">Atmospheric observations</p>
+          <p class="eyebrow">Current weather</p>
           <h1 id="heroHeading">Read the sky<br><em>before you go.</em></h1>
           <p class="hero-description">A clear, considered look at the weather where you are now and where you're headed next.</p>
-          
           
           <div class="search-container">
             <form class="search-form" id="searchForm" role="search">
@@ -157,7 +155,7 @@
                       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                   </span>
-                  <input id="cityInput" type="search" placeholder="Search a city or region..." value="London" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false">
+                  <input id="cityInput" type="search" placeholder="Search a city..." value="London" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false">
                   <button type="submit" aria-label="Search city" title="Search city">
                     <span aria-hidden="true">&#8599;</span>
                   </button>
@@ -176,14 +174,12 @@
             <p class="form-status" id="formStatus" role="status" aria-live="polite">Search a city or pick from recent places.</p>
           </div>
 
-          
           <div class="recent-searches-bar" id="recentSearchesContainer" aria-label="Recent searches" hidden>
             <span class="recent-label">Recent:</span>
             <div class="recent-pills" id="recentPills"></div>
             <button type="button" class="recent-clear-btn" id="clearRecentBtn" title="Clear search history">Clear</button>
           </div>
 
-          
           <div class="quick-controls" aria-label="Weather controls">
             <div class="unit-toggle" role="group" aria-label="Temperature unit">
               <button class="unit-option is-active" type="button" data-unit="celsius" aria-pressed="true">°C</button>
@@ -224,13 +220,12 @@
           <div class="share-feedback" id="shareFeedback" role="status" aria-live="polite" hidden></div>
         </div>
 
-        
         <div class="sky-card" id="skyCard" data-weather="clear" data-is-day="true">
           <div class="sky-glow" aria-hidden="true"></div>
           <div class="weather-particles" aria-hidden="true"></div>
           <div class="sky-card-top">
             <span class="pill"><span class="pulse" aria-hidden="true"></span> Current view</span>
-            <span class="coordinates" id="coordinates">51.51 N / 0.13 W</span>
+            <span class="coordinates" id="coordinates" hidden></span>
           </div>
           <div class="weather-orb" aria-hidden="true">
             <div class="sun-core"></div>
@@ -260,174 +255,83 @@
             <span class="temperature" id="temperature">18</span><span class="degree" aria-hidden="true">°</span><span class="unit" id="temperatureUnit">C</span>
           </div>
           <div class="sky-footer">
-            <span id="feelsLike">Feels like 18°</span>
-            <span class="footer-separator" aria-hidden="true"></span>
-            <span id="daylight">Daylight 12h 04m</span>
+            <div class="sky-footer-row">
+              <span id="feelsLike">Feels like 18°</span>
+              <span class="footer-separator" aria-hidden="true">·</span>
+              <span id="heroRange">Today: --° / --°</span>
+              <span class="footer-separator" aria-hidden="true">·</span>
+              <span id="heroRain">Rain: --% chance</span>
+            </div>
           </div>
         </div>
       </section>
 
-      
       <section class="favorites-section" id="favoritesSection" aria-labelledby="favHeading" hidden>
         <div class="favorites-header">
           <div>
             <p class="eyebrow">Saved locations</p>
-            <h2 id="favHeading">Favorites</h2>
+            <h2 id="favHeading">My places</h2>
           </div>
           <span class="favorites-count" id="favoritesCount">0 locations</span>
         </div>
         <div class="favorites-grid" id="favoritesGrid" role="list"></div>
       </section>
 
-      
-      <section class="details-section" id="conditionsSection" aria-labelledby="detailsHeading">
+      <section class="what-matters-section" id="whatMattersSection" aria-labelledby="whatMattersHeading">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">The useful details</p>
-            <h2 id="detailsHeading">Conditions at a glance</h2>
+            <p class="eyebrow">Highlights</p>
+            <h2 id="whatMattersHeading">What matters today</h2>
           </div>
-          <div class="date-stamp" id="dateStamp">MON / 09 SEP 2024</div>
+          <div class="date-stamp" id="dateStamp">--</div>
         </div>
-        <div class="metrics-grid">
-          
-          <article class="metric-card metric-wind">
-            <div class="metric-top">
-              <span>Wind</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
-                </svg>
+        <div class="what-matters-grid">
+          <article class="matters-card matters-rain">
+            <div class="matters-top">
+              <span class="matters-label">Rain</span>
+              <span class="matters-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><line x1="8" y1="19" x2="6" y2="23"></line><line x1="13" y1="19" x2="11" y2="23"></line><line x1="18" y1="19" x2="16" y2="23"></line></svg>
               </span>
             </div>
-            <div class="metric-value"><strong id="windSpeed">11</strong><span id="windSpeedUnit">km/h</span></div>
-            <div class="metric-note">
-              <span class="wind-arrow-wrap">
-                <span class="wind-arrow" id="windArrow" aria-hidden="true">&#8599;</span>
-                <span id="windDirection">Westerly breeze</span>
-              </span>
-            </div>
+            <div class="matters-val" id="mattersRainVal">--% chance</div>
+            <div class="matters-sub" id="mattersRainSub">Calculating precipitation...</div>
           </article>
 
-          
-          <article class="metric-card metric-humidity">
-            <div class="metric-top">
-              <span>Humidity</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
-                </svg>
+          <article class="matters-card matters-heat">
+            <div class="matters-top">
+              <span class="matters-label">Heat</span>
+              <span class="matters-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
               </span>
             </div>
-            <div class="metric-value"><strong id="humidity">68</strong><span>%</span></div>
-            <div class="metric-bar" aria-hidden="true"><span id="humidityBar" style="width: 68%;"></span></div>
-            <div class="metric-note" id="humidityNote">Comfortable air</div>
+            <div class="matters-val" id="mattersHeatVal">--° high</div>
+            <div class="matters-sub" id="mattersHeatSub">Peak around midday</div>
           </article>
 
-          
-          <article class="metric-card metric-high">
-            <div class="metric-top">
-              <span>Today's range</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="2" x2="12" y2="22"></line>
-                  <polyline points="16 6 12 2 8 6"></polyline>
-                  <polyline points="16 18 12 22 8 18"></polyline>
-                </svg>
+          <article class="matters-card matters-uv">
+            <div class="matters-top">
+              <span class="matters-label">UV index</span>
+              <span class="matters-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
               </span>
             </div>
-            <div class="metric-value"><strong id="highTemp">21</strong><span id="highTempUnit">° high</span></div>
-            <div class="range-track" aria-hidden="true"><span id="rangeTrack" style="width: 58%;"></span></div>
-            <div class="metric-note"><span id="lowTemp">Low 13°</span><span id="rangeNote">Mild afternoon</span></div>
+            <div class="matters-val" id="mattersUvVal">--</div>
+            <div class="matters-sub" id="mattersUvSub">Peak around solar noon</div>
           </article>
 
-          
-          <article class="metric-card metric-visibility">
-            <div class="metric-top">
-              <span>Visibility</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
+          <article class="matters-card matters-air">
+            <div class="matters-top">
+              <span class="matters-label">Air quality</span>
+              <span class="matters-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
               </span>
             </div>
-            <div class="metric-value"><strong id="visibility">24</strong><span id="visibilityUnit">km</span></div>
-            <div class="metric-note">
-              <span class="visibility-status">Excellent</span>
-              <span class="visibility-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i class="is-dim"></i></span>
-            </div>
-          </article>
-
-          
-          <article class="metric-card">
-            <div class="metric-top">
-              <span>Pressure</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="9"></circle>
-                  <polyline points="12 7 12 12 15 15"></polyline>
-                </svg>
-              </span>
-            </div>
-            <div class="metric-value"><strong id="pressure">1018</strong><span>hPa</span></div>
-            <div class="metric-note" id="pressureNote">Sea-level pressure</div>
-          </article>
-
-          
-          <article class="metric-card">
-            <div class="metric-top">
-              <span>Dew point</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
-              </span>
-            </div>
-            <div class="metric-value"><strong id="dewPoint">11</strong><span id="dewPointUnit">°C</span></div>
-            <div class="metric-note" id="dewPointNote">Comfortable air</div>
-          </article>
-
-          
-          <article class="metric-card">
-            <div class="metric-top">
-              <span>Cloud cover</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
-                </svg>
-              </span>
-            </div>
-            <div class="metric-value"><strong id="cloudCover">35</strong><span>%</span></div>
-            <div class="metric-bar" aria-hidden="true"><span id="cloudCoverBar" style="width: 35%;"></span></div>
-            <div class="metric-note" id="cloudCoverNote">Partly clear sky</div>
-          </article>
-
-          
-          <article class="metric-card">
-            <div class="metric-top">
-              <span>UV index</span>
-              <span class="metric-icon-wrap" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="5"></circle>
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="1" y1="12" x2="3" y2="12"></line>
-                  <line x1="21" y1="12" x2="23" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-              </span>
-            </div>
-            <div class="metric-value"><strong id="uvIndex">3.2</strong><span>today max <b id="uvMax">4.5</b></span></div>
-            <div class="uv-scale" aria-hidden="true"><span id="uvScaleFill" style="left: 30%;"></span></div>
-            <div class="metric-note" id="uvNote">Moderate UV risk</div>
+            <div class="matters-val" id="mattersAirVal">--</div>
+            <div class="matters-sub" id="mattersAirSub">Air quality reading...</div>
           </article>
         </div>
       </section>
 
-      
       <section class="forecast-section" id="hourlySection" aria-labelledby="hourlyHeading">
         <div class="section-heading">
           <div>
@@ -446,183 +350,42 @@
         <div class="selected-hour-detail" id="selectedHourDetail" aria-live="polite" hidden></div>
       </section>
 
-      
-      <section class="analysis-grid" id="intelligenceSection" aria-labelledby="analysisHeading">
-        
-        <article class="analysis-panel today-glance-panel" id="todayGlancePanel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow" id="analysisHeading">Diurnal progression</p>
-              <h2 id="chartPanelHeading">Today at a glance</h2>
-            </div>
-            <div class="chart-metric-switcher" role="radiogroup" aria-label="Chart data metric">
-              <button type="button" class="chart-metric-pill is-active" data-metric="temperature" role="radio" aria-checked="true">Temp &amp; Feels</button>
-              <button type="button" class="chart-metric-pill" data-metric="precipitation" role="radio" aria-checked="false">Precipitation</button>
-              <button type="button" class="chart-metric-pill" data-metric="wind" role="radio" aria-checked="false">Wind</button>
-              <button type="button" class="chart-metric-pill" data-metric="humidity" role="radio" aria-checked="false">Humidity &amp; Cloud</button>
-            </div>
+      <section class="outlook-section" id="outlookSection" aria-labelledby="outlookHeading">
+        <div class="outlook-title">
+          <p class="eyebrow">The next 7 days</p>
+          <h2 id="outlookHeading">7-Day forecast</h2>
+          <p class="section-subtitle">Upcoming weather conditions, high and low temperatures, and rain chances.</p>
+        </div>
+        <div class="forecast-list" id="forecastList" role="list"></div>
+      </section>
+
+      <section class="today-summary-section" id="todaySummarySection" aria-labelledby="todaySummaryHeading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Today's forecast</p>
+            <h2 id="todaySummaryHeading">Weather to watch</h2>
           </div>
-
-          <div class="diurnal-grid" id="diurnalGrid">
-            <div class="diurnal-card">
-              <div class="diurnal-header">
-                <span class="diurnal-period">Morning</span>
-                <span class="diurnal-time">06:00 &ndash; 12:00</span>
-              </div>
-              <div class="diurnal-temp-row">
-                <strong class="diurnal-temp" id="diurnalMorningTemp">--&deg;</strong>
-                <span class="diurnal-icon" id="diurnalMorningIcon" aria-hidden="true">&#9728;</span>
-              </div>
-              <div class="diurnal-cond" id="diurnalMorningCond">--</div>
-              <div class="diurnal-badge" id="diurnalMorningBadge">--</div>
-            </div>
-
-            <div class="diurnal-card is-highlight">
-              <div class="diurnal-header">
-                <span class="diurnal-period">Afternoon</span>
-                <span class="diurnal-time">12:00 &ndash; 18:00</span>
-              </div>
-              <div class="diurnal-temp-row">
-                <strong class="diurnal-temp" id="diurnalAfternoonTemp">--&deg;</strong>
-                <span class="diurnal-icon" id="diurnalAfternoonIcon" aria-hidden="true">&#9728;</span>
-              </div>
-              <div class="diurnal-cond" id="diurnalAfternoonCond">--</div>
-              <div class="diurnal-badge" id="diurnalAfternoonBadge">--</div>
-            </div>
-
-            <div class="diurnal-card">
-              <div class="diurnal-header">
-                <span class="diurnal-period">Evening</span>
-                <span class="diurnal-time">18:00 &ndash; 22:00</span>
-              </div>
-              <div class="diurnal-temp-row">
-                <strong class="diurnal-temp" id="diurnalEveningTemp">--&deg;</strong>
-                <span class="diurnal-icon" id="diurnalEveningIcon" aria-hidden="true">&#9729;</span>
-              </div>
-              <div class="diurnal-cond" id="diurnalEveningCond">--</div>
-              <div class="diurnal-badge" id="diurnalEveningBadge">--</div>
-            </div>
-
-            <div class="diurnal-card">
-              <div class="diurnal-header">
-                <span class="diurnal-period">Overnight</span>
-                <span class="diurnal-time">22:00 &ndash; 06:00</span>
-              </div>
-              <div class="diurnal-temp-row">
-                <strong class="diurnal-temp" id="diurnalNightTemp">--&deg;</strong>
-                <span class="diurnal-icon" id="diurnalNightIcon" aria-hidden="true">&#9790;</span>
-              </div>
-              <div class="diurnal-cond" id="diurnalNightCond">--</div>
-              <div class="diurnal-badge" id="diurnalNightBadge">--</div>
-            </div>
+        </div>
+        <div class="today-summary-card">
+          <div class="summary-body">
+            <p class="today-summary-text" id="todaySummaryText">Loading today's forecast...</p>
+            <div class="today-summary-tip" id="todaySummaryAction"></div>
           </div>
-
-          <div class="glance-summary-strip" id="glanceSummaryStrip">
-            <div class="summary-metric">
-              <span class="metric-lbl">Rain probability window</span>
-              <strong class="metric-val" id="glanceRainWindow">Calculating...</strong>
-            </div>
-            <div class="summary-divider" aria-hidden="true"></div>
-            <div class="summary-metric">
-              <span class="metric-lbl">Solar Noon &amp; UV Peak</span>
-              <strong class="metric-val" id="glanceUvPeak">--</strong>
-            </div>
-            <div class="summary-divider" aria-hidden="true"></div>
-            <div class="summary-metric">
-              <span class="metric-lbl">Diurnal Thermal Span</span>
-              <strong class="metric-val" id="glanceTempSpan">--</strong>
-            </div>
-          </div>
-
-          <div class="compact-sparkline-wrap">
-            <div class="sparkline-header">
-              <span class="sparkline-title" id="sparklineTitle">24-hour diurnal trajectory</span>
-              <div class="chart-legend" id="chartLegend" aria-label="Chart legend">
-                <span class="legend-item actual-temp" id="legendItem1"><i></i> temperature</span>
-                <span class="legend-item feels-temp" id="legendItem2"><i></i> feels like</span>
-              </div>
-            </div>
-            <div class="temperature-chart-container compact-chart">
-              <div class="temperature-chart" id="temperatureChart" role="img" aria-label="Hourly meteorological trendline"></div>
-              <div class="chart-tooltip" id="chartTooltip" hidden></div>
-            </div>
-          </div>
-        </article>
-
-        
-        <div class="intelligence-column">
-          
-          <article class="analysis-panel intelligence-panel" aria-labelledby="intelligenceTitle">
-            <div>
-              <p class="eyebrow">Atmospheric Briefing</p>
-              <h2 id="intelligenceTitle">Reading the atmosphere</h2>
-              <p id="intelligenceText">Atmospheric analysis will appear once weather data is loaded.</p>
-            </div>
-            <div class="insight-tags" id="insightTags" aria-label="Key atmospheric highlights"></div>
-          </article>
-
-          <article class="analysis-panel timeline-panel" id="timelinePanel" aria-labelledby="timelineHeading">
-            <div class="timeline-header">
-              <p class="eyebrow" id="timelineHeading">Diurnal timeline</p>
-              <h3>Today's atmospheric checkpoints</h3>
-            </div>
-            <div class="daily-timeline-track" id="dailyTimeline"></div>
-          </article>
-
-          <article class="analysis-panel risk-center-panel" id="riskCenterPanel" aria-labelledby="riskHeading">
-            <div class="risk-center-header">
-              <p class="eyebrow" id="riskHeading">Risk evaluation</p>
-              <h3>Atmospheric risk center</h3>
-            </div>
-            <div class="risk-grid" id="riskCenterGrid"></div>
-          </article>
-
-          
-          <article class="best-time-panel" id="bestTimeSection" aria-labelledby="bestTimeHeading">
-            <div class="best-time-header">
-              <span class="eyebrow">Atmospheric Windows</span>
-              <h3 id="bestTimeHeading">Best time today</h3>
-            </div>
-            <div class="best-time-grid" id="bestTimeGrid"></div>
-          </article>
         </div>
       </section>
 
-      
-      <section class="precipitation-section" id="precipSection" aria-labelledby="precipHeading">
+      <section class="celestial-section" id="celestialSection" aria-labelledby="sunMoonHeading">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Hydrological outlook</p>
-            <h2 id="precipHeading">Precipitation &amp; rain chance</h2>
-          </div>
-          <div class="rain-callout" id="rainCallout">Mostly dry today</div>
-        </div>
-        <div class="precipitation-body">
-          <div class="precip-stat">
-            <strong id="precipProbability">10</strong>
-            <span>% chance of rain today</span>
-          </div>
-          <div class="precip-stat">
-            <strong id="precipAmount">0.0</strong>
-            <span id="precipUnit">mm expected volume</span>
-          </div>
-          <div class="precip-bars" id="precipBars" role="img" aria-label="Hourly rain probability breakdown"></div>
-        </div>
-      </section>
-
-      <section class="celestial-section" id="celestialSection" aria-labelledby="celestialHeading">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Celestial cycles</p>
+            <p class="eyebrow">Daylight &amp; night</p>
             <h2 id="sunMoonHeading">Sun &amp; moon</h2>
           </div>
           <div class="daylight-status" id="daylightStatus">Daylight now</div>
         </div>
         <div class="sun-moon-grid">
-          
           <article class="cycle-card sun-card">
             <div class="cycle-header">
-              <span class="cycle-title">Solar cycle</span>
+              <span class="cycle-title">Sun</span>
               <span class="cycle-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="5"></circle>
@@ -637,25 +400,22 @@
                 </svg>
               </span>
             </div>
-            <div class="solar-arc-container" id="solarArcContainer" aria-hidden="true"></div>
             <div class="cycle-stats">
               <div><span>Sunrise</span><strong id="sunrise">06:24 AM</strong></div>
               <div><span>Sunset</span><strong id="sunset">07:38 PM</strong></div>
-              <div><span>Total daylight</span><strong id="daylightDuration">13h 14m</strong></div>
+              <div><span>Daylight</span><strong id="daylightDuration">13h 14m</strong></div>
             </div>
           </article>
 
-          
           <article class="cycle-card moon-card">
             <div class="cycle-header">
-              <span class="cycle-title">Lunar cycle</span>
+              <span class="cycle-title">Moon</span>
               <span class="cycle-icon" id="moonSymbol" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                 </svg>
               </span>
             </div>
-            <div class="solar-arc-container" id="lunarGraphicContainer" aria-hidden="true"></div>
             <div class="cycle-stats">
               <div><span>Phase</span><strong id="moonPhase">Waxing Crescent</strong></div>
               <div><span>Illumination</span><strong id="moonIllumination">24%</strong></div>
@@ -665,26 +425,144 @@
         </div>
       </section>
 
-      
       <section class="air-quality-section" id="airQualitySection" aria-labelledby="aqHeading">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Atmospheric purity</p>
-            <h2 id="aqHeading">Air quality &amp; pollutants</h2>
+            <p class="eyebrow">Air index</p>
+            <h2 id="aqHeading">Air quality</h2>
           </div>
           <div class="aq-badge" id="aqCategory">Good</div>
         </div>
-        <div class="air-quality-grid" id="airQualityGrid">
-          <div class="air-quality-empty" id="airQualityEmpty">Loading air quality data...</div>
+        <div class="aq-summary-panel">
+          <div class="aq-score-block">
+            <span class="aq-number" id="aqAqiNumber">--</span>
+            <div class="aq-score-info">
+              <strong id="aqCategoryTitle">Air quality is acceptable</strong>
+              <p id="aqDescription">Air quality is acceptable for most people.</p>
+            </div>
+          </div>
+          <details class="aq-details-toggle">
+            <summary class="aq-details-summary">
+              <span>View pollutant breakdown</span>
+              <span class="aq-caret" aria-hidden="true">&#9662;</span>
+            </summary>
+            <div class="air-quality-grid" id="airQualityGrid">
+              <div class="air-quality-empty" id="airQualityEmpty">Loading air quality data...</div>
+            </div>
+          </details>
         </div>
       </section>
 
-      
+      <section class="advanced-details-section" id="advancedDetailsSection">
+        <details class="advanced-details-accordion">
+          <summary class="advanced-details-summary">
+            <div class="summary-left">
+              <span class="summary-title">More weather details</span>
+              <span class="summary-sub">Humidity, pressure, visibility, wind details, dew point, cloud cover</span>
+            </div>
+            <span class="accordion-icon" aria-hidden="true">&#9662;</span>
+          </summary>
+
+          <div class="details-accordion-body">
+            <div class="metrics-grid">
+              <article class="metric-card metric-wind">
+                <div class="metric-top">
+                  <span>Wind</span>
+                  <span class="metric-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                    </svg>
+                  </span>
+                </div>
+                <div class="metric-value"><strong id="windSpeed">11</strong><span id="windSpeedUnit">km/h</span></div>
+                <div class="metric-note">
+                  <span class="wind-arrow-wrap">
+                    <span class="wind-arrow" id="windArrow" aria-hidden="true">&#8599;</span>
+                    <span id="windDirection">Westerly breeze</span>
+                  </span>
+                </div>
+              </article>
+
+              <article class="metric-card metric-humidity">
+                <div class="metric-top">
+                  <span>Humidity</span>
+                  <span class="metric-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                    </svg>
+                  </span>
+                </div>
+                <div class="metric-value"><strong id="humidity">68</strong><span>%</span></div>
+                <div class="metric-bar" aria-hidden="true"><span id="humidityBar" style="width: 68%;"></span></div>
+                <div class="metric-note" id="humidityNote">Comfortable air</div>
+              </article>
+
+              <article class="metric-card metric-visibility">
+                <div class="metric-top">
+                  <span>Visibility</span>
+                  <span class="metric-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </span>
+                </div>
+                <div class="metric-value"><strong id="visibility">24</strong><span id="visibilityUnit">km</span></div>
+                <div class="metric-note">
+                  <span class="visibility-status" id="visibilityStatus">Clear line of sight</span>
+                </div>
+              </article>
+
+              <article class="metric-card">
+                <div class="metric-top">
+                  <span>Pressure</span>
+                  <span class="metric-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="9"></circle>
+                      <polyline points="12 7 12 12 15 15"></polyline>
+                    </svg>
+                  </span>
+                </div>
+                <div class="metric-value"><strong id="pressure">1018</strong><span>hPa</span></div>
+                <div class="metric-note" id="pressureNote">Normal sea level</div>
+              </article>
+
+              <article class="metric-card">
+                <div class="metric-top">
+                  <span>Dew point</span>
+                  <span class="metric-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                  </span>
+                </div>
+                <div class="metric-value"><strong id="dewPoint">11</strong><span id="dewPointUnit">°C</span></div>
+                <div class="metric-note" id="dewPointNote">Comfortable</div>
+              </article>
+
+              <article class="metric-card">
+                <div class="metric-top">
+                  <span>Cloud cover</span>
+                  <span class="metric-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                    </svg>
+                  </span>
+                </div>
+                <div class="metric-value"><strong id="cloudCover">35</strong><span>%</span></div>
+                <div class="metric-bar" aria-hidden="true"><span id="cloudCoverBar" style="width: 35%;"></span></div>
+                <div class="metric-note" id="cloudCoverNote">Partly clear sky</div>
+              </article>
+            </div>
+          </div>
+        </details>
+      </section>
+
       <section class="map-section" id="mapSection" aria-labelledby="mapHeading">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Geographic view</p>
-            <h2 id="mapHeading">Atmospheric coordinates &amp; map</h2>
+            <p class="eyebrow">Location view</p>
+            <h2 id="mapHeading">Weather map</h2>
           </div>
           <p class="section-note" id="mapHint">Click any point on the map to inspect weather at those coordinates</p>
         </div>
@@ -697,25 +575,22 @@
         </div>
       </section>
 
-      
       <section class="compare-section" id="compareSection" aria-labelledby="compareHeading">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Comparative meteorology</p>
+            <p class="eyebrow">Comparison</p>
             <h2 id="compareHeading">Compare locations</h2>
           </div>
-          <p class="section-note">Side-by-side comparison across key atmospheric metrics</p>
+          <p class="section-note">Side-by-side comparison across key weather metrics</p>
         </div>
 
         <div class="compare-inputs-grid">
-          
           <div class="compare-slot-card is-active-slot">
             <span class="slot-badge">Primary</span>
             <strong class="slot-title" id="compareSlot1Name">London</strong>
             <span class="slot-sub" id="compareSlot1Region">United Kingdom</span>
           </div>
 
-          
           <div class="compare-slot-card" id="compareSlot2Card">
             <div class="slot-header">
               <span class="slot-badge">Comparison 1</span>
@@ -731,7 +606,6 @@
             </div>
           </div>
 
-          
           <div class="compare-slot-card" id="compareSlot3Card">
             <div class="slot-header">
               <span class="slot-badge">Comparison 2</span>
@@ -750,12 +624,12 @@
 
         <div class="compare-table-container" id="compareTableContainer">
           <div class="compare-empty-prompt" id="compareEmptyPrompt">
-            <span>Select one or two additional cities above to begin side-by-side atmospheric comparison.</span>
+            <span>Select one or two additional cities above to begin side-by-side comparison.</span>
           </div>
           <table class="compare-table" id="compareTable" hidden>
             <thead>
               <tr>
-                <th scope="col">Atmospheric Metric</th>
+                <th scope="col">Weather Metric</th>
                 <th scope="col" id="thCity1">London</th>
                 <th scope="col" id="thCity2">City 2</th>
                 <th scope="col" id="thCity3">City 3</th>
@@ -765,19 +639,8 @@
           </table>
         </div>
       </section>
-
-      
-      <section class="outlook-section" id="outlookSection" aria-labelledby="outlookHeading">
-        <div class="outlook-title">
-          <p class="eyebrow">The next 7 days</p>
-          <h2 id="outlookHeading">Weekly outlook</h2>
-          <p class="section-subtitle">A scan of upcoming conditions, diurnal temperatures, and precipitation probabilities.</p>
-        </div>
-        <div class="forecast-list" id="forecastList" role="list"></div>
-      </section>
     </main>
 
-    
     <footer>
       <div class="footer-copy">
         <span>&copy; Northstar Weather &middot; Read the sky before you go.</span>
@@ -786,19 +649,17 @@
         <span>Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></span>
         <span>Map tiles &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</span>
         <span>Mapping by <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet</a></span>
-        <span>Location by <a href="https://www.bigdatacloud.com/" target="_blank" rel="noopener noreferrer">BigDataCloud</a></span>
       </div>
     </footer>
   </div>
 
-  
   <div class="cmd-palette-backdrop" id="commandPaletteBackdrop" hidden>
     <div class="cmd-palette-dialog" id="commandPaletteDialog" role="dialog" aria-modal="true" aria-label="Quick search palette">
       <div class="cmd-input-wrap">
         <span class="cmd-search-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="18" height="18"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </span>
-        <input type="text" class="cmd-input" id="commandPaletteInput" placeholder="Search city, recent places, or actions..." autocomplete="off" spellcheck="false">
+        <input type="text" class="cmd-input" id="commandPaletteInput" placeholder="Search city or action..." autocomplete="off" spellcheck="false">
         <button type="button" class="cmd-close-btn" id="closeCommandPaletteBtn" aria-label="Close search palette">&times;</button>
       </div>
       <div class="cmd-results-wrap" id="commandPaletteResults" role="listbox">
@@ -814,7 +675,7 @@
           </button>
         </div>
         <div class="cmd-section-wrap" id="cmdFavoritesSection" hidden>
-          <div class="cmd-section-label">Favorites</div>
+          <div class="cmd-section-label">Saved places</div>
           <div class="cmd-list" id="cmdFavoritesList"></div>
         </div>
         <div class="cmd-section-wrap" id="cmdRecentsSection" hidden>
@@ -849,7 +710,7 @@
         <div class="settings-row">
           <div>
             <strong>Appearance theme</strong>
-            <small>Select light paper, obsidian dark, or auto</small>
+            <small>Select light paper, dark, or auto</small>
           </div>
           <div class="settings-theme-pills" id="settingsThemePills">
             <button type="button" class="settings-pill" data-theme-choice="light">Light</button>
@@ -860,7 +721,7 @@
         <div class="settings-row">
           <div>
             <strong>Temperature unit</strong>
-            <small>Display readings in Celsius or Fahrenheit</small>
+            <small>Display in Celsius or Fahrenheit</small>
           </div>
           <div class="settings-unit-pills" id="settingsTempPills">
             <button type="button" class="settings-pill" data-temp-choice="celsius">&deg;C</button>
@@ -870,7 +731,7 @@
         <div class="settings-row">
           <div>
             <strong>Wind speed unit</strong>
-            <small>Display velocity in km/h or mph</small>
+            <small>Display in km/h or mph</small>
           </div>
           <div class="settings-unit-pills" id="settingsWindPills">
             <button type="button" class="settings-pill" data-wind-choice="kmh">km/h</button>
@@ -880,46 +741,51 @@
       </div>
 
       <div class="settings-group">
-        <h3 class="settings-group-title">Dashboard Customization</h3>
-        <p class="settings-desc">Choose which atmospheric modules appear on your dashboard:</p>
+        <h3 class="settings-group-title">Dashboard Sections</h3>
+        <p class="settings-desc">Choose which sections appear on your dashboard:</p>
         <div class="settings-toggle-list" id="dashboardSectionsList">
           <label class="toggle-item">
-            <span>Air Quality telemetry</span>
-            <input type="checkbox" id="toggleSectionAqi" checked data-section-target="airQualitySection">
+            <span>What matters today</span>
+            <input type="checkbox" id="toggleSectionWhatMatters" checked data-section-target="whatMattersSection">
             <span class="toggle-slider"></span>
           </label>
           <label class="toggle-item">
-            <span>Hourly forecast &amp; trends</span>
+            <span>Hourly forecast</span>
             <input type="checkbox" id="toggleSectionHourly" checked data-section-target="hourlySection">
             <span class="toggle-slider"></span>
           </label>
           <label class="toggle-item">
-            <span>7-Day weekly outlook</span>
+            <span>7-Day forecast</span>
             <input type="checkbox" id="toggleSectionOutlook" checked data-section-target="outlookSection">
             <span class="toggle-slider"></span>
           </label>
           <label class="toggle-item">
-            <span>Weather intelligence &amp; timeline</span>
-            <input type="checkbox" id="toggleSectionIntelligence" checked data-section-target="intelligenceSection">
+            <span>Today's forecast summary</span>
+            <input type="checkbox" id="toggleSectionSummary" checked data-section-target="todaySummarySection">
             <span class="toggle-slider"></span>
           </label>
           <label class="toggle-item">
-            <span>Hydrological &amp; rain distribution</span>
-            <input type="checkbox" id="toggleSectionPrecip" checked data-section-target="precipSection">
-            <span class="toggle-slider"></span>
-          </label>
-          <label class="toggle-item">
-            <span>Solar &amp; lunar celestial progression</span>
+            <span>Sun &amp; Moon</span>
             <input type="checkbox" id="toggleSectionCelestial" checked data-section-target="celestialSection">
             <span class="toggle-slider"></span>
           </label>
           <label class="toggle-item">
-            <span>Interactive Leaflet weather map</span>
+            <span>Air Quality</span>
+            <input type="checkbox" id="toggleSectionAqi" checked data-section-target="airQualitySection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>More weather details</span>
+            <input type="checkbox" id="toggleSectionDetails" checked data-section-target="advancedDetailsSection">
+            <span class="toggle-slider"></span>
+          </label>
+          <label class="toggle-item">
+            <span>Weather map</span>
             <input type="checkbox" id="toggleSectionMap" checked data-section-target="mapSection">
             <span class="toggle-slider"></span>
           </label>
           <label class="toggle-item">
-            <span>Multi-city comparison</span>
+            <span>Compare locations</span>
             <input type="checkbox" id="toggleSectionCompare" checked data-section-target="compareSection">
             <span class="toggle-slider"></span>
           </label>
@@ -927,11 +793,11 @@
       </div>
 
       <div class="settings-group">
-        <h3 class="settings-group-title">Personal Weather Alerts</h3>
-        <p class="settings-desc">Configure local threshold advisories:</p>
+        <h3 class="settings-group-title">Weather Advisories</h3>
+        <p class="settings-desc">Configure personal weather thresholds:</p>
         <div class="settings-row">
           <div>
-            <strong>Rain probability threshold</strong>
+            <strong>Rain chance threshold</strong>
             <small>Flag advisory when rain chance exceeds</small>
           </div>
           <div class="settings-input-wrap">
@@ -951,7 +817,7 @@
         </div>
         <div class="settings-row">
           <div>
-            <strong>Air Quality (US AQI) threshold</strong>
+            <strong>Air Quality (AQI) threshold</strong>
             <small>Flag advisory when AQI exceeds</small>
           </div>
           <div class="settings-input-wrap">
@@ -962,8 +828,8 @@
       </div>
 
       <div class="settings-group">
-        <h3 class="settings-group-title">Manage Saved Favorites</h3>
-        <p class="settings-desc">Customize labels or remove saved cities:</p>
+        <h3 class="settings-group-title">Saved Places</h3>
+        <p class="settings-desc">Manage your saved cities:</p>
         <div class="settings-favs-list" id="settingsFavsList"></div>
       </div>
     </div>
@@ -1002,7 +868,7 @@
           </button>
         </form>
         <div class="auth-footnote">
-          <span>Guest mode is always available. Accounts enable cloud sync for favorites, alerts, and settings.</span>
+          <span>Guest mode is always available. Accounts save your places across devices.</span>
         </div>
       </div>
     </div>
@@ -1011,11 +877,11 @@
   <div class="modal-backdrop" id="syncModalBackdrop" hidden>
     <div class="sync-modal" id="syncModal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
       <div class="sync-modal-header">
-        <h3 id="syncModalTitle">Sync Local Locations</h3>
+        <h3 id="syncModalTitle">Sync Saved Places</h3>
         <button type="button" class="modal-close-btn" id="closeSyncModalBtn" aria-label="Close dialog">&times;</button>
       </div>
       <div class="sync-modal-body">
-        <p id="syncModalText">You have saved locations in your browser. Would you like to sync them with your Northstar cloud account?</p>
+        <p id="syncModalText">You have saved places on this device. Would you like to sync them with your account?</p>
         <div class="sync-modal-actions">
           <button type="button" class="ns-btn ns-btn-primary" id="confirmSyncBtn">Sync to Cloud</button>
           <button type="button" class="ns-btn ns-btn-ghost" id="dismissSyncBtn">Keep Local Only</button>
