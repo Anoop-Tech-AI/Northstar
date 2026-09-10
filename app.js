@@ -99,8 +99,6 @@ const elements = {
   accountDropdown: document.querySelector('#accountDropdown'),
   dropdownUserName: document.querySelector('#dropdownUserName'),
   dropdownUserEmail: document.querySelector('#dropdownUserEmail'),
-  accountOpenSettings: document.querySelector('#accountOpenSettings'),
-  accountOpenFavorites: document.querySelector('#accountOpenFavorites'),
   accountSignOutBtn: document.querySelector('#accountSignOutBtn'),
   authModalBackdrop: document.querySelector('#authModalBackdrop'),
   closeAuthModalBtn: document.querySelector('#closeAuthModalBtn'),
@@ -3427,23 +3425,6 @@ function setupAuth() {
     });
   }
 
-  if (elements.accountOpenSettings) {
-    elements.accountOpenSettings.addEventListener('click', () => {
-      if (elements.accountDropdown) elements.accountDropdown.hidden = true;
-      if (elements.settingsBackdrop) elements.settingsBackdrop.hidden = false;
-    });
-  }
-
-  if (elements.accountOpenFavorites) {
-    elements.accountOpenFavorites.addEventListener('click', () => {
-      if (elements.accountDropdown) elements.accountDropdown.hidden = true;
-      const favSec = document.querySelector('#favoritesSection');
-      if (favSec) {
-        favSec.hidden = false;
-        favSec.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
-  }
 
   if (elements.confirmSyncBtn) {
     elements.confirmSyncBtn.addEventListener('click', async () => {
