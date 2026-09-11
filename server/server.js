@@ -46,9 +46,30 @@ app.use(
   })
 );
 
+app.set('trust proxy', 1);
+
+const defaultOrigins = [
+  'https://northstar-qg06.onrender.com',
+  `http://localhost:${PORT}`,
+  `http://127.0.0.1:${PORT}`,
+  'http://localhost:8000'
+];
+
+const envOrigins = process.env.CLIENT_ORIGIN
+  ? process.env.CLIENT_ORIGIN.split(',').map((s) => s.trim())
+  : [];
+
+const allowedOrigins = Array.from(new Set([...envOrigins, ...defaultOrigins]));
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || `http://localhost:${PORT}`,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS not allowed for this origin'));
+      }
+    },
     credentials: true
   })
 );
@@ -72,7 +93,31 @@ app.use('/api/v1/alerts', apiLimiter, alertRoutes);
 app.use('/api/v1/search-history', apiLimiter, searchHistoryRoutes);
 app.use('/api/v1/weather', apiLimiter, weatherRoutes);
 
-app.use(express.static(CLIENT_ROOT));
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.join(CLIENT_ROOT, 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.sendFile(path.join(CLIENT_ROOT, 'sitemap.xml'));
+});
+
+app.use((req, res, next) => {
+  const normalizedPath = req.path.toLowerCase();
+  if (
+    normalizedPath.startsWith('/server') ||
+    normalizedPath.startsWith('/node_modules') ||
+    normalizedPath === '/package.json' ||
+    normalizedPath === '/package-lock.json' ||
+    normalizedPath.startsWith('/.')
+  ) {
+    return res.status(404).end();
+  }
+  next();
+});
+
+app.use(express.static(CLIENT_ROOT, { dotfiles: 'deny' }));
 
 app.use('/api', notFoundHandler);
 
@@ -82,7 +127,7 @@ app.get('*', (req, res) => {
 
 app.use(errorHandler);
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`Northstar server listening on port ${PORT}`);
 });
 
